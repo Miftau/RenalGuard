@@ -295,16 +295,15 @@ def ensure_model_files(timeout=60):
         except Exception as e:
             print("❌ failed to download", fname, e)
 
-# Load models & encoders
+
+# Load models & encoders (updated names for kidney)
 def load_models():
     print("🔄 Loading models & encoders...")
     clinical_model = joblib.load(CLINICAL_MODEL_FILE)
-    clinical_encoders_info = joblib.load(CLINICAL_ENCODERS_FILE)
-    # CLINICAL_FEATURE_COLUMNS = clinical_template_df.columns.tolist() # Not needed if using original column names from training
+    clinical_encoders_info = joblib.load(CLINICAL_ENCODERS_FILE) # Load the info file containing encoders and column lists
 
     lifestyle_model = joblib.load(LIFESTYLE_MODEL_FILE)
-    lifestyle_encoders_info = joblib.load(LIFESTYLE_ENCODERS_FILE)
-    # LIFESTYLE_FEATURE_COLUMNS = lifestyle_template_df.columns.tolist() # Not needed if using original column names from training
+    lifestyle_encoders_info = joblib.load(LIFESTYLE_ENCODERS_FILE) # Load the info file for lifestyle
 
     print("✅ Models loaded")
     return (clinical_model, clinical_encoders_info,
@@ -342,7 +341,7 @@ def prepare_and_predict(df_raw: pd.DataFrame, model_type: str) -> pd.DataFrame:
         model = lifestyle_model
         feature_columns = BASE_COLUMNS_KIDNEY_LIFESTYLE # Use the list of expected columns from training
 
-    # Get the encoders and column lists
+    # Get the encoders and column lists from the info file
     encoders = encoders_info['encoders']
     num_cols = encoders_info['numerical_columns']
     cat_cols = encoders_info['categorical_columns']
@@ -350,34 +349,54 @@ def prepare_and_predict(df_raw: pd.DataFrame, model_type: str) -> pd.DataFrame:
     # Prepare the input dataframe with only the required features
     X_input = df.reindex(columns=feature_columns, fill_value=0) # Fill missing features with 0 or handle differently
 
+    # --- CRITICAL FIX: Ensure numerical columns are numeric before any numerical operations ---
+    # Convert numerical columns to float, coercing errors to NaN
+    for col in num_cols:
+        if col in X_input.columns:
+            X_input[col] = pd.to_numeric(X_input[col], errors='coerce')
+
     # Apply preprocessing steps as done during training
     # 1. Handle numerical columns: Impute with median (as done in training script)
-    X_num_imputed = pd.DataFrame(
-        X_input[num_cols].fillna(X_input[num_cols].median()), # Use median of input row or overall median if needed
-        columns=num_cols,
-        index=X_input.index
-    )
+    # Calculate median from the numerical data (which is now guaranteed to be numeric)
+    # Use only the columns that exist in X_input and are listed as numerical
+    existing_num_cols = [col for col in num_cols if col in X_input.columns]
+    if existing_num_cols:
+        X_num_imputed = X_input[existing_num_cols].copy()
+        # Calculate the median for each existing numerical column
+        medians = X_num_imputed.median() # This should now work correctly
+        # Fill NaN values with the calculated medians
+        X_num_imputed = X_num_imputed.fillna(medians)
+    else:
+        # If no numerical columns are present, create an empty DataFrame with the correct index
+        X_num_imputed = pd.DataFrame(index=X_input.index)
 
     # 2. Handle categorical columns: Impute with 'missing', then encode
-    X_cat_encoded = X_input[cat_cols].copy()
+    X_cat_encoded = X_input[cat_cols].copy() if cat_cols else pd.DataFrame(index=X_input.index) # Handle case where cat_cols is empty
     for col in cat_cols:
-        le = encoders[col]
-        # Impute unseen labels or missing values with 'missing' first
-        X_cat_encoded[col] = X_cat_encoded[col].fillna('missing')
-        # Transform using the fitted encoder
-        # Handle unseen labels by mapping them to the index of 'missing' if 'missing' was a category during training
-        # This is complex. A simpler fallback: map unseen to the first category.
-        try:
-            X_cat_encoded[col] = le.transform(X_cat_encoded[col])
-        except ValueError as e:
-            print(f"Warning: Unseen label in {col}: {e}. Mapping to first category index.")
-            X_cat_encoded[col] = 0 # Map to first category index as fallback
+        if col in X_cat_encoded.columns:
+            le = encoders[col]
+            # Impute unseen labels or missing values with 'missing' first
+            X_cat_encoded[col] = X_cat_encoded[col].fillna('missing')
+            # Transform using the fitted encoder
+            # Handle unseen labels by mapping them to the index of 'missing' if 'missing' was a category during training
+            # This is complex. A simpler fallback: map unseen to the first category.
+            try:
+                X_cat_encoded[col] = le.transform(X_cat_encoded[col])
+            except ValueError as e:
+                print(f"Warning: Unseen label in {col}: {e}. Mapping to first category index (0).")
+                # Find the index of 'missing' if it was a known category, otherwise default to 0
+                # A safer approach: re-fit the encoder or use a more robust handling strategy.
+                # For now, using 0 as a fallback.
+                X_cat_encoded[col] = 0 # Map to first category index as fallback
 
     # Combine processed numerical and categorical features
     X_processed = pd.concat([X_num_imputed, X_cat_encoded], axis=1)
 
-    # Ensure column order matches training
-    X_final = X_processed[feature_columns]
+    # Ensure column order matches training (only for columns that exist in both)
+    # It's crucial that the order and presence of columns match exactly what the model expects.
+    # We already used reindex earlier to ensure feature_columns are present.
+    # X_final should have the same columns as feature_columns, in the same order.
+    X_final = X_processed.reindex(columns=feature_columns, fill_value=0) # Reindex again to ensure final order and presence
 
     # Convert to numpy array for prediction
     X = X_final.values
@@ -392,7 +411,7 @@ def prepare_and_predict(df_raw: pd.DataFrame, model_type: str) -> pd.DataFrame:
             df_dec = model.decision_function(X)
             probs = 1.0 / (1.0 + np.exp(-df_dec))
         except Exception:
-            probs = model.predict(X).astype(float)  # last resort, predict_proba is preferred
+            probs = model.predict(X).astype(float)  # last resort
 
     preds = model.predict(X)
 
