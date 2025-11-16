@@ -1,0 +1,202 @@
+{% extends 'base.html' %}
+{% block extra_head %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+<script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    AOS.init({
+      duration: 900,
+      easing: 'ease-out-cubic',
+      once: false,
+      mirror: true,
+      offset: 120
+    });
+  });
+
+  // Refresh AOS on every scroll for infinite replay
+  window.addEventListener('scroll', () => AOS.refresh());
+</script>
+<style>
+  .fade-in { animation: fadeIn 1s ease-out forwards; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  .slide-up { animation: slideUp 0.8s ease-out forwards; }
+  @keyframes slideUp { from { transform: translateY(40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  .scale-hover { transition: all 0.3s ease; }
+  .scale-hover:hover { transform: scale(1.05); box-shadow: 0 15px 30px rgba(0,0,0,0.1); }
+  .btn-pulse { 
+    animation: pulse 2s infinite; 
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+  }
+  @keyframes pulse { 
+    0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+    70% { box-shadow: 0 0 0 15px rgba(239, 68, 68, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+  }
+  .input-focus { transition: all 0.3s ease; }
+  .input-focus:focus { 
+    transform: translateY(-2px); 
+    box-shadow: 0 8px 20px rgba(239, 68, 68, 0.2); 
+  }
+  .faq-item { transition: all 0.4s ease; cursor: pointer; }
+  .faq-item:hover { 
+    background: linear-gradient(135deg, #fef2f2, #fdfdfd); 
+    transform: translateY(-4px); 
+    box-shadow: 0 10px 25px rgba(0,0,0,0.08); 
+  }
+  .map-container { 
+    transition: all 0.5s ease; 
+    overflow: hidden; 
+    border-radius: 16px; 
+  }
+  .map-container:hover iframe { transform: scale(1.03); }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="bg-gradient-to-r from-red-50 to-white py-16 border-b">
+  <div class="container mx-auto px-4">
+    <div class="max-w-3xl mx-auto text-center" data-aos="zoom-in">
+      <h1 class="text-4xl md:text-5xl font-bold text-gray-800 mb-4 fade-in">Contact Us</h1>
+      <p class="text-xl text-gray-600 mb-6 slide-up">
+        Have questions? We're here to help!
+      </p>
+      <div class="w-24 h-1 bg-red-500 rounded-full mx-auto scale-hover" data-aos="flip-up" data-aos-delay="300"></div>
+    </div>
+  </div>
+</section>
+
+<!-- Contact Content -->
+<section class="py-16">
+  <div class="container mx-auto px-4">
+    <div class="grid md:grid-cols-2 gap-12 items-center">
+      <!-- Contact Form -->
+      <div data-aos="fade-right">
+        <h2 class="text-3xl font-bold text-gray-800 mb-6 slide-up">Send us a message</h2>
+        <p class="text-gray-600 mb-8 fade-in" data-aos="fade-up" data-aos-delay="100">
+          Have a question, feedback, or partnership inquiry? Our team is here to help you. 
+          Fill the form or reach us directly at <a href="mailto:support@heartpredict.ai" class="text-red-500 font-medium hover:underline scale-hover inline-block">support@heartpredict.ai</a>.
+        </p>
+
+        <form method="POST" class="space-y-6">
+          <div data-aos="fade-up" data-aos-delay="150">
+            <label for="name" class="block text-gray-700 mb-2">Full Name</label>
+            <input type="text" id="name" name="name" placeholder="John Doe" class="w-full p-3 border border-gray-300 rounded-lg input-focus focus:ring-2 focus:ring-red-500 focus:border-transparent" required>
+          </div>
+          
+          <div data-aos="fade-up" data-aos-delay="200">
+            <label for="email" class="block text-gray-700 mb-2">Email Address</label>
+            <input type="email" id="email" name="email" placeholder="john@example.com" class="w-full p-3 border border-gray-300 rounded-lg input-focus focus:ring-2 focus:ring-red-500 focus:border-transparent" required>
+          </div>
+          
+          <div data-aos="fade-up" data-aos-delay="250">
+            <label for="subject" class="block text-gray-700 mb-2">Subject</label>
+            <input type="text" id="subject" name="subject" placeholder="How can we help?" class="w-full p-3 border border-gray-300 rounded-lg input-focus focus:ring-2 focus:ring-red-500 focus:border-transparent" required>
+          </div>
+          
+          <div data-aos="fade-up" data-aos-delay="300">
+            <label for="message" class="block text-gray-700 mb-2">Your Message</label>
+            <textarea id="message" name="message" placeholder="Type your message here..." class="w-full p-3 border border-gray-300 rounded-lg input-focus focus:ring-2 focus:ring-red-500 focus:border-transparent resize-none" rows="5" required></textarea>
+          </div>
+          
+          <button type="submit" class="bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-lg transition duration-300 w-full md:w-auto btn-pulse scale-hover" data-aos="zoom-in" data-aos-delay="400">
+            Send Message
+          </button>
+        </form>
+      </div>
+
+      <!-- Contact Info & Map -->
+      <div data-aos="fade-left">
+        <h2 class="text-3xl font-bold text-gray-800 mb-6 slide-up">Contact Information</h2>
+        
+        <div class="space-y-6 mb-10">
+          <div class="flex items-start fade-in" data-aos="fade-up" data-aos-delay="100">
+            <div class="bg-red-100 p-3 rounded-full mr-4 animate-pulse">
+              <i class="fas fa-map-marker-alt text-red-500 text-xl"></i>
+            </div>
+            <div>
+              <h3 class="text-lg font-semibold text-gray-800">Our Location</h3>
+              <p class="text-gray-600">BLk 4, Railway Compound, Dugbe<br>Ibadan, Nigeria</p>
+            </div>
+          </div>
+          
+          <div class="flex items-start fade-in" data-aos="fade-up" data-aos-delay="150">
+            <div class="bg-red-100 p-3 rounded-full mr-4 animate-pulse">
+              <i class="fas fa-phone-alt text-red-500 text-xl"></i>
+            </div>
+            <div>
+              <h3 class="text-lg font-semibold text-gray-800">Phone Number</h3>
+              <p class="text-gray-600">+234 (0) 806 612 7153<br>+234 (0) 915 225 9397</p>
+            </div>
+          </div>
+          
+          <div class="flex items-start fade-in" data-aos="fade-up" data-aos-delay="200">
+            <div class="bg-red-100 p-3 rounded-full mr-4 animate-pulse">
+              <i class="fas fa-envelope text-red-500 text-xl"></i>
+            </div>
+            <div>
+              <h3 class="text-lg font-semibold text-gray-800">Email Address</h3>
+              <p class="text-gray-600">muftaudeenyusufbabatunde@gmail.com<br>abdullahibabatunde644@gmail.com</p>
+            </div>
+          </div>
+          
+          <div class="flex items-start fade-in" data-aos="fade-up" data-aos-delay="250">
+            <div class="bg-red-100 p-3 rounded-full mr-4 animate-pulse">
+              <i class="fas fa-clock text-red-500 text-xl"></i>
+            </div>
+            <div>
+              <h3 class="text-lg font-semibold text-gray-800">Working Hours</h3>
+              <p class="text-gray-600">Monday - Friday: 9AM - 9PM<br>Saturday: 10AM - 9PM</p>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Map -->
+        <div class="h-80 rounded-2xl overflow-hidden shadow-lg border border-gray-200 map-container scale-hover" data-aos="zoom-in" data-aos-delay="300">
+          <iframe
+            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3958.3457926!2d3.3792055!3d6.5243793!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x103b8b08a5fcbf37%3A0xb8a9e4f2edb5a34c!2sLagos%2C%20Nigeria!5e0!3m2!1sen!2sng!4v1667157682210!5m2!1sen!2sng"
+            width="100%" height="100%" style="border:0; transition: transform 0.5s ease;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade">
+          </iframe>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ Section -->
+<section class="py-16 bg-gray-50">
+  <div class="container mx-auto px-4">
+    <div class="text-center mb-16" data-aos="fade-down">
+      <h2 class="text-3xl md:text-4xl font-bold text-gray-800 mb-4">Frequently Asked Questions</h2>
+      <p class="text-gray-600 max-w-2xl mx-auto fade-in">
+        Find answers to common questions about our heart disease prediction service
+      </p>
+      <div class="w-24 h-1 bg-red-500 rounded-full mx-auto mt-4 scale-hover" data-aos="flip-up" data-aos-delay="200"></div>
+    </div>
+    
+    <div class="max-w-3xl mx-auto space-y-6">
+      <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 faq-item" data-aos="fade-up" data-aos-delay="100">
+        <h3 class="text-xl font-semibold text-gray-800 mb-2">How accurate is your prediction model?</h3>
+        <p class="text-gray-600">Our model has an accuracy rate of 95% based on clinical validation studies using data from over 10,000 patients.</p>
+      </div>
+      
+      <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 faq-item" data-aos="fade-up" data-aos-delay="150">
+       ?"
+        <h3 class="text-xl font-semibold text-gray-800 mb-2">Is my health data secure?</h3>
+        <p class="text-gray-600">Yes, we use bank-level encryption and comply with HIPAA regulations to ensure your data is always protected and private.</p>
+      </div>
+      
+      <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 faq-item" data-aos="fade-up" data-aos-delay="200">
+        <h3 class="text-xl font-semibold text-gray-800 mb-2">Do I need a prescription to use this service?</h3>
+        <p class="text-gray-600">No, our service is available directly to consumers. However, we recommend sharing results with your healthcare provider.</p>
+      </div>
+      
+      <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 faq-item" data-aos="fade-up" data-aos-delay="250">
+        <h3 class="text-xl font-semibold text-gray-800 mb-2">How long does it take to get results?</h3>
+        <p class="text-gray-600">Results are generated instantly after you submit your health information. The entire process takes less than 5 minutes.</p>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
