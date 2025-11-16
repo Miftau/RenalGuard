@@ -310,23 +310,8 @@ def load_models():
     return (clinical_model, clinical_encoders_info,
             lifestyle_model, lifestyle_encoders_info)
 
-models_loaded = False
-
-def get_models():
-    global models_loaded, clinical_model, clinical_encoders_info, lifestyle_model, lifestyle_encoders_info
-
-    if not models_loaded:
-        (clinical_model,
-         clinical_encoders_info,
-         lifestyle_model,
-         lifestyle_encoders_info) = load_models()
-        models_loaded = True
-
-    return (clinical_model,
-            clinical_encoders_info,
-            lifestyle_model,
-            lifestyle_encoders_info)
-
+(clinical_model, clinical_encoders_info,
+ lifestyle_model, lifestyle_encoders_info) = load_models()
 
 # Prediction helper (clinical & lifestyle) - Adapted for Kidney Models
 def prepare_and_predict(df_raw: pd.DataFrame, model_type: str) -> pd.DataFrame:
