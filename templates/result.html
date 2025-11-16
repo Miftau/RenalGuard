@@ -1,0 +1,273 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<!-- Hero Section -->
+<section class="bg-gradient-to-r from-blue-50 to-white py-16 border-b">
+  <div class="container mx-auto px-4 text-center">
+    <h1 class="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
+      {{ "Lifestyle Kidney Assessment" if model_type == "lifestyle" else "Clinical Kidney Assessment" }}
+    </h1>
+    <p class="text-lg text-gray-600 mb-6">
+      {{ "Analyzing lifestyle and general wellness indicators for kidney health" if model_type == "lifestyle" else "Evaluating your clinical kidney health risk" }}
+    </p>
+    <div class="w-20 h-1 bg-blue-500 rounded-full mx-auto"></div>
+  </div>
+</section>
+
+<!-- Results Section -->
+<section class="py-16">
+  <div class="container mx-auto px-4">
+    <div class="max-w-4xl mx-auto bg-white rounded-2xl shadow-lg overflow-hidden">
+
+      <!-- Header -->
+      <div class="bg-gradient-to-r from-blue-500 to-indigo-700 text-white p-8 text-center">
+        <h2 class="text-3xl font-bold mb-2">Prediction Results</h2>
+        <p class="text-blue-100">Based on your submitted data</p>
+        <p class="text-sm text-blue-200 mt-2 italic">
+          Model Used: {{ "Lifestyle Model 🏃" if model_type == "lifestyle" else "Clinical Model 🫘" }}
+        </p>
+      </div>
+
+      <!-- Main Result -->
+      <div class="p-8 space-y-6">
+        {% if result %}
+          {% set prob_percent = (prob * 100) | round(1) %}
+          {% if risk == "Low" %}
+            {% set bar_color = "bg-green-500" %}
+            {% set risk_color = "text-green-700 bg-green-100" %}
+          {% elif risk == "Medium" %}
+            {% set bar_color = "bg-yellow-500" %}
+            {% set risk_color = "text-yellow-700 bg-yellow-100" %}
+          {% else %}
+            {% set bar_color = "bg-red-500" %}
+            {% set risk_color = "text-red-700 bg-red-100" %}
+          {% endif %}
+
+          <div class="border rounded-xl bg-gray-50 p-6 shadow-inner">
+            <h2 class="text-2xl font-semibold mb-3 text-gray-800">{{ result }}</h2>
+            <p class="text-sm mb-2 text-gray-600">Prediction Confidence:</p>
+
+            <div class="w-full bg-gray-200 rounded-full h-4 overflow-hidden">
+              <div class="{{ bar_color }} h-4 rounded-full" style="width: {{ prob_percent }}%;"></div>
+            </div>
+
+            <div class="flex justify-between mt-1 text-xs text-gray-500">
+              <span>0%</span><span>{{ prob_percent }}%</span><span>100%</span>
+            </div>
+
+            <div class="mt-4 text-center">
+              <span class="inline-block px-4 py-1 text-sm font-semibold rounded-full {{ risk_color }}">
+                Risk Level: {{ risk }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Likely Condition -->
+          {% if likely_condition %}
+          <div class="bg-blue-50 border-l-4 border-blue-500 p-5 rounded mt-6">
+            <h3 class="text-xl font-semibold text-blue-700 mb-1">Possible Condition:</h3>
+            <p class="text-gray-700 mb-2"><strong>{{ likely_condition }}</strong></p>
+            <p class="text-sm text-gray-600">
+              This result suggests a pattern similar to {{ likely_condition }} based on your inputs.
+              For an accurate medical diagnosis, consult a nephrologist or use the RenalConsultant below.
+            </p>
+          </div>
+          {% endif %}
+        {% endif %}
+
+        <!-- Recommendations -->
+        <div class="bg-gray-50 p-6 rounded-xl border mt-8">
+          <h3 class="text-2xl font-semibold text-gray-800 mb-4">Personalized Kidney Health Recommendations 💡</h3>
+          <ul class="list-disc ml-5 text-gray-700 space-y-2">
+            <li>Stay adequately hydrated throughout the day.</li>
+            <li>Follow a balanced diet low in sodium and processed foods.</li>
+            <li>Monitor your blood pressure and blood sugar levels regularly.</li>
+            <li>Limit alcohol consumption and avoid smoking.</li>
+            <li>Engage in regular physical activity.</li>
+            <li>Review medications with your doctor for potential kidney impact.</li>
+          </ul>
+        </div>
+
+        {% if tables %}
+          <div class="overflow-x-auto border-t border-gray-200 pt-4">
+            {{ tables|safe }}
+          </div>
+        {% endif %}
+
+        <!-- Actions -->
+        <div class="flex flex-wrap justify-center gap-4 mt-6">
+          {% if download_link %}
+            <a href="{{ download_link }}" download class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg">
+              ⬇️ Download CSV
+            </a>
+          {% endif %}
+          <a href="/form" class="bg-gray-700 hover:bg-gray-800 text-white px-4 py-2 rounded-lg">
+            🔙 Back to Form
+          </a>
+        </div>
+
+<!-- Live AI RenalConsultant -->
+<div class="mt-12 bg-gradient-to-br from-blue-50 to-indigo-100 rounded-2xl shadow-lg overflow-hidden">
+  <!-- Header -->
+  <div class="bg-gradient-to-r from-blue-600 to-indigo-700 p-6 text-center">
+    <h3 class="text-2xl font-bold text-white flex items-center justify-center gap-2">
+      <span class="bg-white bg-opacity-20 p-2 rounded-full">💬</span>
+      Your AI RenalConsultant
+    </h3>
+    <p class="text-blue-100 mt-2">Expert kidney health guidance available 24/7</p>
+  </div>
+
+  <!-- Chat Container -->
+  <div class="p-6">
+    <p class="text-gray-600 mb-6 text-center">
+      Discuss your results, lifestyle habits, and risk factors directly with your AI RenalConsultant.
+      You can chat or speak using your voice.
+    </p>
+
+    <!-- Chat Window -->
+    <div id="consult-chat"
+         class="bg-gradient-to-b from-gray-50 to-white border border-gray-200 rounded-xl p-4 h-80 overflow-y-auto mb-4 shadow-inner">
+      <div class="text-gray-500 text-sm text-center py-20 flex items-center justify-center">
+        <div class="flex flex-col items-center">
+          <div class="bg-blue-100 p-3 rounded-full mb-3">
+            <span class="text-blue-600 text-xl">🫘</span>
+          </div>
+          <p>AI is ready to assist...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Input Section -->
+    <div class="flex items-center space-x-2">
+      <button id="mic-btn" 
+              class="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white p-3 rounded-xl shadow-md hover:shadow-lg transition duration-300 transform hover:-translate-y-0.5">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z" clip-rule="evenodd" />
+        </svg>
+      </button>
+      <input type="text" 
+             id="chat-input" 
+             placeholder="Ask something about your kidney health..." 
+             class="flex-1 border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 rounded-xl px-4 py-3 transition duration-200 shadow-sm">
+      <button id="send-btn" 
+              class="bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white px-5 py-3 rounded-xl shadow-md hover:shadow-lg transition duration-300 transform hover:-translate-y-0.5">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+        </svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+
+        <!-- Disclaimer -->
+        <div class="bg-yellow-50 border-l-4 border-yellow-500 p-4 mt-8 rounded">
+          <div class="flex items-start space-x-3">
+            <i class="fas fa-exclamation-triangle text-yellow-500 text-lg mt-1"></i>
+            <p class="text-sm text-yellow-700 leading-relaxed">
+              <strong>Note:</strong> This prediction is not a substitute for professional medical advice.
+              Always consult a certified healthcare provider before making health decisions.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Resources -->
+<section class="py-16 bg-gray-50 border-t">
+  <div class="container mx-auto px-4">
+    <div class="text-center mb-12">
+      <h2 class="text-3xl font-bold text-gray-800 mb-3">Helpful Resources for Kidney Health</h2>
+      <p class="text-gray-600 max-w-2xl mx-auto">
+        Discover evidence-based tools and guides to manage your kidney health better.
+      </p>
+      <div class="w-20 h-1 bg-blue-500 rounded-full mx-auto mt-4"></div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+      <div class="bg-white p-6 rounded-xl shadow text-center">
+        <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-4 mx-auto">
+          <i class="fas fa-kidneys text-blue-500 text-xl"></i> <!-- Icon representing kidneys -->
+        </div>
+        <h3 class="text-xl font-bold mb-2 text-gray-800">Understand Kidney Risk Factors</h3>
+        <p class="text-gray-600 mb-4">Identify and control common risk indicators for kidney disease.</p>
+        <a href="https://www.kidney.org/atoz/content/risk" target="_blank" class="text-blue-500 font-semibold hover:underline">Learn More →</a>
+      </div>
+
+      <div class="bg-white p-6 rounded-xl shadow text-center">
+        <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-4 mx-auto">
+          <i class="fas fa-dumbbell text-blue-500 text-xl"></i>
+        </div>
+        <h3 class="text-xl font-bold mb-2 text-gray-800">Exercise Recommendations</h3>
+        <p class="text-gray-600 mb-4">Follow personalized workouts to support overall health and kidney function.</p>
+        <a href="https://www.niddk.nih.gov/health-information/weight-management/physical-activity-and-weight-loss" target="_blank" class="text-blue-500 font-semibold hover:underline">Start Now →</a>
+      </div>
+
+      <div class="bg-white p-6 rounded-xl shadow text-center">
+        <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-4 mx-auto">
+          <i class="fas fa-utensils text-blue-500 text-xl"></i>
+        </div>
+        <h3 class="text-xl font-bold mb-2 text-gray-800">Kidney-Friendly Nutrition</h3>
+        <p class="text-gray-600 mb-4">Enjoy delicious recipes designed for kidney health.</p>
+        <a href="https://www.kidney.org/atoz/content/recipes" target="_blank" class="text-blue-500 font-semibold hover:underline">View Recipes →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- JS: Chat and Voice -->
+<script>
+const chatBox = document.getElementById('consult-chat');
+const chatInput = document.getElementById('chat-input');
+const sendBtn = document.getElementById('send-btn');
+const micBtn = document.getElementById('mic-btn');
+
+// Voice recognition
+let recognition;
+if ('webkitSpeechRecognition' in window) {
+  recognition = new webkitSpeechRecognition();
+  recognition.lang = 'en-US';
+  recognition.onresult = function(event) {
+    chatInput.value = event.results[0][0].transcript;
+  };
+  micBtn.onclick = () => recognition.start();
+} else {
+  micBtn.disabled = true;
+  micBtn.title = "Voice input not supported";
+}
+
+function appendMessage(role, text) {
+  const div = document.createElement('div');
+  div.classList.add('mb-2');
+  div.innerHTML = role === 'user'
+    ? `<div class="text-right"><div class="inline-block bg-blue-100 text-blue-800 px-3 py-2 rounded-lg">${text}</div></div>`
+    : `<div class="text-left"><div class="inline-block bg-gray-100 text-gray-800 px-3 py-2 rounded-lg">${text}</div></div>`;
+  chatBox.appendChild(div);
+  chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+sendBtn.onclick = async () => {
+  const message = chatInput.value.trim();
+  if (!message) return;
+  appendMessage('user', message);
+  chatInput.value = '';
+  const res = await fetch('/chat', { // Assuming your backend handles chat at /chat
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({message})
+  });
+  const data = await res.json();
+  appendMessage('bot', data.reply);
+
+  // Voice output
+  if ('speechSynthesis' in window) {
+    const utter = new SpeechSynthesisUtterance(data.reply);
+    utter.lang = 'en-US';
+    speechSynthesis.speak(utter);
+  }
+};
+</script>
+
+{% endblock %}
