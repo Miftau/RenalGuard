@@ -432,6 +432,8 @@
   </main>
 </div>
 
+<!-- ... (previous HTML code remains unchanged) ... -->
+
 <script>
   const modelSelector = document.getElementById('model_type');
   const inputSelector = document.getElementById('input_mode');
@@ -441,11 +443,21 @@
   const clinicalFields = document.querySelector('.clinical-fields');
   const lifestyleFields = document.querySelector('.lifestyle-fields');
 
-  // Helper function to toggle required attributes
-  function toggleRequired(fields, required) {
-    fields.querySelectorAll('input, select').forEach(el => {
-      if (required) el.setAttribute('required', 'required');
-      else el.removeAttribute('required');
+  // Helper function to toggle required attributes on a container
+  function toggleRequired(container, required) {
+    const inputs = container.querySelectorAll('input[required], select[required]');
+    inputs.forEach(el => {
+      if (required) {
+        // If it doesn't already have required, add it
+        if (!el.hasAttribute('required')) {
+             el.setAttribute('required', 'required');
+        }
+      } else {
+        // If it has required, remove it
+        if (el.hasAttribute('required')) {
+             el.removeAttribute('required');
+        }
+      }
     });
   }
 
@@ -455,11 +467,13 @@
     if (e.target.value === 'kidney_lifestyle') {
       clinicalFields.classList.add('hidden');
       lifestyleFields.classList.remove('hidden');
+      // Disable required on clinical fields, enable on lifestyle
       toggleRequired(clinicalFields, false);
       toggleRequired(lifestyleFields, true);
     } else { // kidney_clinical
       lifestyleFields.classList.add('hidden');
       clinicalFields.classList.remove('hidden');
+      // Disable required on lifestyle fields, enable on clinical
       toggleRequired(lifestyleFields, false);
       toggleRequired(clinicalFields, true);
     }
@@ -469,13 +483,24 @@
     if (e.target.value === 'csv') {
       csvSection.classList.remove('hidden');
       manualSection.classList.add('hidden');
+      // If switching to CSV, ensure no manual fields are required
+      toggleRequired(clinicalFields, false);
+      toggleRequired(lifestyleFields, false);
     } else {
       csvSection.classList.add('hidden');
       manualSection.classList.remove('hidden');
+      // If switching to manual, ensure fields for the *current* model are required
+      if (modelSelector.value === 'kidney_lifestyle') {
+          toggleRequired(lifestyleFields, true);
+          toggleRequired(clinicalFields, false); // Ensure clinical is off if it was on
+      } else { // kidney_clinical
+          toggleRequired(clinicalFields, true);
+          toggleRequired(lifestyleFields, false); // Ensure lifestyle is off if it was on
+      }
     }
   });
 
-  // Initialize default state
+  // Initialize default state on page load
   document.addEventListener('DOMContentLoaded', () => {
     hiddenModel.value = modelSelector.value;
     if (modelSelector.value === 'kidney_lifestyle') {
@@ -493,6 +518,9 @@
     if (inputSelector.value === 'csv') {
       csvSection.classList.remove('hidden');
       manualSection.classList.add('hidden');
+      // Ensure manual fields are not required if starting on CSV
+      toggleRequired(clinicalFields, false);
+      toggleRequired(lifestyleFields, false);
     }
   });
 

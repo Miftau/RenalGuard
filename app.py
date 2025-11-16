@@ -1011,10 +1011,12 @@ def form():
 # Routes - Prediction & AI (RenalGuard Specific)
 # ============================================================
 
+
 @app.route("/predict", methods=["POST"])
 @check_subscription_access # Apply access control
 def predict():
     try:
+        # --- Get Model Type ---
         raw_type = (request.form.get("model_type") or "clinical").lower()
         # Map user-friendly names to internal types
         model_map = {
@@ -1023,51 +1025,49 @@ def predict():
             "kidney_lifestyle": "lifestyle",
             "lifestyle": "lifestyle"
         }
-        model_type = model_map.get(raw_type, "clinical")
+        model_type = model_map.get(raw_type, "clinical") # Default to clinical if unknown
 
+        # --- Get Data ---
         uploaded_file = request.files.get("file")
         if uploaded_file and uploaded_file.filename:
             df = pd.read_csv(uploaded_file)
         else:
-            base_cols = BASE_COLUMNS_KIDNEY_CLINICAL if model_type == "clinical" else BASE_COLUMNS_KIDNEY_LIFESTYLE
+            # Get the base columns for the selected model type
+            if model_type == "clinical":
+                base_cols = BASE_COLUMNS_KIDNEY_CLINICAL # Use the updated list from app.py
+            else: # lifestyle
+                base_cols = BASE_COLUMNS_KIDNEY_LIFESTYLE # Use the updated list from app.py
+
             user_data = {}
             for c in base_cols:
-                # Get value from form, handle aliases if needed
+                # Get the value directly using the feature name as the form input name
                 val = request.form.get(c)
-                if val is None:
-                    # Add alias mapping here if needed, e.g., 'gender' -> 'RIAGENDR'
-                    # Example: if c == "RIAGENDR": val = request.form.get("gender")
-                    pass # No aliases defined in this example
+                # Optional: Add logic here if certain values need to be converted
+                # (e.g., 'Yes'/'No' to 1/0, or string numbers to floats)
+                # For now, assume the form sends the correct data type or a string representation
                 user_data[c] = val
             df = pd.DataFrame([user_data])
 
+        # --- Predict ---
+        # Ensure the model type passed here matches the one used to select base_cols
         results = prepare_and_predict(df, model_type)
 
+        # --- Post-Success Logic (saving records, session update) ---
         if user_id := session.get("user_id"):
-            # Logged in user: record the prediction in the 'records' table
-            # This implicitly tracks usage for paid users based on plan limits (handled in decorator)
             try:
                 supabase.table("records").insert({
                     "user_id": user_id,
                     "consultation_type": f"kidney_{model_type}", # Store kidney-specific type
-                    "health_score": float(results.iloc[0]["Prob_Pos"]), # Store probability as score
-                    "recommendation": "See results page for details." # Or derive from results
+                    "health_score": float(results.iloc[0]["Prob_Pos"]),
+                    "recommendation": "See results page for details."
                 }).execute()
             except Exception as e:
                 print(f"Error saving record for user {user_id}: {e}")
-                # Flash a warning but allow results to be shown
                 flash("⚠️ Warning: Result not saved to your history.", "warning")
         else:
-            # Non-logged-in user: update session time
             session['last_form_time'] = datetime.now().isoformat()
 
-        # --- END POST-SUCCESS LOGIC ---
-        # Save results CSV
-        fname = f"kidney_{model_type}_pred_{uuid.uuid4().hex[:8]}.csv"
-        save_path = os.path.join(RESULTS_DIR, fname)
-        results.to_csv(save_path, index=False)
-        download_link = url_for("static", filename=f"results/{fname}")
-
+        # --- Prepare Results for Template ---
         single = results.iloc[0]
         prob = float(single["Prob_Pos"])
         risk = single["Risk_Level"]
@@ -1076,13 +1076,12 @@ def predict():
             else "No Kidney Disease Risk Detected"
         )
 
-        # heuristic inference (use available fields; fallback to 0)
-        # Map form fields to function arguments
-        # Example mapping - adjust based on your actual form fields and model features
-        # This is a simplified example. You might need a more complex mapping depending on your feature names.
+        # --- Heuristic Inference ---
+        # Map result columns back to function arguments for get_likely_kidney_condition
+        # Use .get() with defaults to handle missing columns gracefully
         likely_condition, suggestions = get_likely_kidney_condition(
             age=single.get("RIDAGEYR"),
-            bmi=single.get("BMXBMI"),
+            bmi=single.get("BMXBMI", 0),
             serum_creatinine=single.get("LBXSCR", 0),
             blood_urea_nitrogen=single.get("LBXBUN", 0),
             egfr=single.get("LBXEGFR", 120), # Default high eGFR
@@ -1100,6 +1099,13 @@ def predict():
             family_history_kidney=single.get("MCQ160E") # Assuming MCQ160E is family history flag
         )
 
+        # --- Save Results CSV ---
+        fname = f"kidney_{model_type}_pred_{uuid.uuid4().hex[:8]}.csv"
+        save_path = os.path.join(RESULTS_DIR, fname)
+        results.to_csv(save_path, index=False)
+        download_link = url_for("static", filename=f"results/{fname}")
+
+        # --- Render Result Template ---
         return render_template(
             "result.html",
             result=readable,
@@ -1109,12 +1115,17 @@ def predict():
             suggestions=suggestions,
             tables=[results.to_html(classes="table table-striped", index=False)],
             download_link=download_link,
-            model_type=model_type # Pass model type for display
+            model_type=model_type
         )
+
     except Exception as e:
         print("Prediction error:", e)
+        import traceback
+        traceback.print_exc() # Print the full traceback for detailed debugging
         flash(f"Error processing prediction: {str(e)}", "danger")
         return redirect(url_for("form"))
+
+
 
 # AI chat endpoint (JSON API) - RenalGuard specific
 @app.route("/consult", methods=["POST"])
