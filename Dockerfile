@@ -1,5 +1,5 @@
 # ============================
-# HeartPredict - Dockerfile
+# RenalGuard - Dockerfile
 # ============================
 
 # Start from a lightweight Python base image
