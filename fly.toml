@@ -1,37 +1,23 @@
-# fly.toml file for HeartPredict Flask App
-app = "renalguard"            # 👈 Change this to your unique app name on Fly.io
-primary_region = "ams"              # Example: Amsterdam (use your nearest region)
+# fly.toml app configuration file generated for renalguard on 2025-11-16T01:36:17Z
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
 
-kill_signal = "SIGINT"
-kill_timeout = 5
-processes = []
+app = 'renalguard'
+primary_region = 'ams'
 
-[env]
-  PORT = "8080"
-  FLASK_ENV = "production"
-  FLASK_APP = "app.py"
+[build]
 
-
-[[services]]
+[http_service]
   internal_port = 8080
-  processes = ["app"]
-  protocol = "tcp"
+  force_https = true
+  auto_stop_machines = 'stop'
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ['app']
 
-  [services.concurrency]
-    type = "requests"
-    soft_limit = 20
-    hard_limit = 25
-
-  [[services.ports]]
-    port = 80
-    handlers = ["http"]
-
-  [[services.ports]]
-    port = 443
-    handlers = ["tls", "http"]
-
-  [services.tcp_checks]
-    interval = "10s"
-    timeout = "2s"
-    grace_period = "30s"
-    restart_limit = 3
+[[vm]]
+  memory = '1gb'
+  cpu_kind = 'shared'
+  cpus = 1
+  memory_mb = 1024
