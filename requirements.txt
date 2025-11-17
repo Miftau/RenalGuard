@@ -5,6 +5,7 @@ seaborn~=0.13.2
 joblib~=1.5.0
 scikit-learn
 flask
+shap
 gunicorn
 Flask-Mail
 python-dotenv

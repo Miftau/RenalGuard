@@ -88,6 +88,47 @@
           </ul>
         </div>
 
+        <!-- SHAP Explanation Section -->
+        {% if shap_explanation %}
+        <div class="bg-blue-50 p-6 rounded-xl border mt-8">
+          <h3 class="text-2xl font-semibold text-gray-800 mb-4">Feature Importance (SHAP)</h3>
+          <p class="text-gray-600 mb-4">These features contributed most to the model's prediction:</p>
+          <div class="space-y-2 max-h-60 overflow-y-auto">
+            {% for item in shap_explanation[:10] %} <!-- Show top 10 features -->
+              <div class="flex justify-between items-center bg-white p-3 rounded-lg shadow-sm">
+                <span class="font-medium text-gray-700">{{ item.feature }}</span>
+                <span class="px-2 py-1 rounded-full text-xs font-semibold
+                  {% if item.shap_value > 0 %}bg-red-100 text-red-800{% else %}bg-green-100 text-green-800{% endif %}">
+                  {{ "%.4f"|format(item.shap_value) }}
+                </span>
+              </div>
+            {% endfor %}
+          </div>
+          <p class="text-sm text-gray-500 mt-2">Positive SHAP values increase risk, negative values decrease risk.</p>
+        </div>
+        {% endif %}
+
+        <!-- SHAP Visualization Chart Section -->
+        <div class="bg-gray-50 p-6 rounded-xl border mt-8">
+          <h3 class="text-2xl font-semibold text-gray-800 mb-4">Prediction Explanation (SHAP)</h3>
+          {% if shap_explanation %}
+            <p class="text-gray-600 mb-4">Visual representation of how features influenced the prediction:</p>
+            <!-- Placeholder for the actual SHAP plot image -->
+            <!-- This assumes the backend saves a plot image and provides its path via a variable like 'shap_plot_path' -->
+            <!-- For now, we'll use a placeholder div that could be populated by JavaScript if the plot is generated client-side -->
+            <div id="shap-plot-container" class="border border-gray-300 rounded-lg p-4 bg-white">
+              <!-- SHAP plot would ideally go here -->
+              <div id="shap-plot-placeholder" class="text-center text-gray-500 py-8">
+                <p>Loading SHAP explanation visualization...</p>
+              </div>
+              <!-- Or, if using a saved image from the backend: -->
+              <!-- <img src="{{ shap_plot_path }}" alt="SHAP Explanation Plot" class="w-full h-auto"> -->
+            </div>
+          {% else %}
+            <p class="text-gray-600">SHAP explanation is not available for this prediction.</p>
+          {% endif %}
+        </div>
+
         {% if tables %}
           <div class="overflow-x-auto border-t border-gray-200 pt-4">
             {{ tables|safe }}
@@ -268,6 +309,82 @@ sendBtn.onclick = async () => {
     speechSynthesis.speak(utter);
   }
 };
+
+// --- NEW: SHAP Visualization Logic ---
+document.addEventListener('DOMContentLoaded', function() {
+    const shapExplanation = {{ shap_explanation | tojson }}; // Pass Python list/dict to JS as JSON
+    const plotContainer = document.getElementById('shap-plot-container');
+    const plotPlaceholder = document.getElementById('shap-plot-placeholder');
+
+    if (shapExplanation && shapExplanation.length > 0) {
+        plotPlaceholder.innerHTML = '<p>Generating SHAP visualization...</p>';
+
+        // --- Option 1: Use SHAP's JavaScript library (if loaded) ---
+        // This requires including shapjs (e.g., via CDN) and generating the explanation in a compatible format (e.g., JSON from shap.force_plot)
+        // Example (requires shapjs and compatible JSON explanation):
+        /*
+        if (window.shapjs) {
+            // Assume shap_explanation is the JSON output from shap.force_plot(..., out_names=["No Risk", "Risk"], ...).save_html("temp.html")
+            // Or a specific JSON format expected by shapjs
+            // This is complex and requires backend preparation.
+            // For now, let's focus on a simple bar chart using Chart.js as an example.
+        }
+        */
+
+        // --- Option 2: Generate a simple visualization using Chart.js or similar ---
+        // This is a basic example using Chart.js to create a horizontal bar chart of SHAP values.
+        // First, include Chart.js in your base.html or here.
+        const chartScript = document.createElement('script');
+        chartScript.src = 'https://cdn.jsdelivr.net/npm/chart.js';
+        chartScript.onload = function() {
+            plotPlaceholder.innerHTML = ''; // Clear placeholder text
+
+            const canvas = document.createElement('canvas');
+            plotContainer.appendChild(canvas);
+
+            const ctx = canvas.getContext('2d');
+            const features = shapExplanation.map(item => item.feature);
+            const shapValues = shapExplanation.map(item => item.shap_value);
+            const colors = shapValues.map(value => value > 0 ? 'rgba(220, 38, 38, 0.7)' : 'rgba(16, 185, 129, 0.7)'); // Red for positive, Green for negative
+
+            new Chart(ctx, {
+                type: 'bar', // Use 'bar' for horizontal bar chart when indexAxis is 'y'
+                data: {
+                    labels: features,
+                    datasets: [{
+                        label: 'SHAP Value',
+                        data: shapValues,
+                        backgroundColor: colors,
+                        borderColor: colors.map(c => c.replace('0.7', '1')),
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    indexAxis: 'y', // Makes it horizontal
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'SHAP Value'
+                            }
+                        }
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Top Features Influencing Prediction'
+                        }
+                    }
+                }
+            });
+        };
+        document.head.appendChild(chartScript);
+
+    } else {
+        plotPlaceholder.innerHTML = '<p>No SHAP explanation available.</p>';
+    }
+});
+
 </script>
 
 {% endblock %}

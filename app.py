@@ -46,6 +46,7 @@ from flask_limiter.util import get_remote_address
 from plotly.utils import PlotlyJSONEncoder
 import plotly.graph_objects as go
 import pandas as pd
+import shap
 import numpy as np
 import joblib
 from functools import wraps # For login_required decorator
@@ -344,6 +345,10 @@ def prepare_and_predict(df_raw: pd.DataFrame, model_type: str) -> pd.DataFrame:
     # Prepare the input dataframe with only the features the model expects
     X_input_for_model = df.reindex(columns=model_input_columns, fill_value=0) # Fill missing model features with 0
 
+    # Store the original input *before* any preprocessing for potential SHAP explanation
+    # This is the raw input that the user provided, mapped to the model's expected columns
+    raw_input_for_shap = X_input_for_model.copy()
+
     # --- Apply Preprocessing Steps Saved During Training ---
     # Convert numerical columns (as defined during training) to float
     for col in num_cols:
@@ -462,7 +467,95 @@ def prepare_and_predict(df_raw: pd.DataFrame, model_type: str) -> pd.DataFrame:
     out_df["Prediction"] = preds # 0 or 1
     out_df["Prob_Pos"] = np.round(probs, 4) # Probability of having the condition
     out_df["Risk_Level"] = out_df["Prob_Pos"].apply(lambda p: "High" if p > 0.66 else ("Medium" if p > 0.33 else "Low"))
-    return out_df
+    return out_df, raw_input_for_shap # Return both results and the raw input for SHAP
+
+
+
+# NEW: Function to generate SHAP explanation
+def generate_shap_explanation(raw_features_df_row, model, feature_names):
+    try:
+
+        return _extracted_from_generate_shap_explanation_5(
+            raw_features_df_row, model, feature_names
+        )
+    except Exception as e:
+        print(f"Error generating SHAP explanation: {e}")
+        import traceback
+        traceback.print_exc() # Print full traceback for debugging
+        return []
+
+
+#  Rename this here and in `generate_shap_explanation`
+def _extracted_from_generate_shap_explanation_5(raw_features_df_row, model, feature_names):
+    # Ensure the input is a single row DataFrame (shape (1, n_features))
+    if raw_features_df_row.shape[0] != 1:
+        print(f"Warning: Expected 1 row for SHAP, got {raw_features_df_row.shape[0]}. Taking first row.")
+        raw_features_df_row = raw_features_df_row.iloc[[0]] # Make sure it's still a DataFrame
+
+    # Get the underlying numpy array for the explainer
+    # Use .values to get the raw numerical array
+    input_array = raw_features_df_row.values
+
+    # Create an explainer object for the specific model type
+    # TreeExplainer is efficient for tree-based models like Random Forest
+    explainer = shap.TreeExplainer(model)
+
+    # Calculate SHAP values for the specific input array
+    # Pass the numpy array directly
+    shap_values_raw = explainer.shap_values(input_array)
+
+    # - Handle potential list structure for multi-output models (like RandomForestClassifier for binary classification) -
+    # shap_values_raw might be a list of arrays for each class [class_0_values, class_1_values] for binary classification
+    # or a single array if the model outputs probability for positive class directly or is single-output.
+    # We typically want the SHAP values corresponding to the positive class (or the output used for probability).
+    # For RandomForestClassifier.predict_proba(X)[:, 1], we usually want the SHAP values for class 1.
+    if isinstance(shap_values_raw, list):
+        # It's a list, likely [shap_values_class_0, shap_values_class_1] for binary classification
+        if len(shap_values_raw) == 2:
+            # Assume index 1 corresponds to the positive class (probability output for class 1)
+            shap_values_for_output = shap_values_raw[1] # Take values for the positive class
+        elif len(shap_values_raw) == 1:
+            # Only one class output, use that
+            shap_values_for_output = shap_values_raw[0]
+        else:
+            # Unexpected number of outputs
+            print(f"Warning: SHAP returned {len(shap_values_raw)} lists, expected 1 or 2. Using the first.")
+            shap_values_for_output = shap_values_raw[0]
+    else:
+        # It's a single array (e.g., from a regressor or a classifier configured differently)
+        shap_values_for_output = shap_values_raw
+
+    # Ensure shap_values_for_output is a 1D array corresponding to features of the single input row
+    # It should have shape (n_features,) after indexing the correct class if needed
+    if shap_values_for_output.ndim > 1:
+        # If it's still multi-dimensional (e.g., (1, n_features)), squeeze it to (n_features,)
+        shap_values_for_output = shap_values_for_output.squeeze(axis=0) # Remove the batch dimension
+    if shap_values_for_output.ndim != 1:
+        print(f"Warning: SHAP output shape {shap_values_for_output.shape} is unexpected after squeeze. Attempting to flatten.")
+        shap_values_for_output = shap_values_for_output.flatten() # Fallback to flatten if still wrong shape
+
+    # At this point, shap_values_for_output should be a 1D numpy array of length n_features
+    # Convert to a list for JSON serialization
+    shap_values_list = shap_values_for_output.tolist()
+    feature_names_list = feature_names # This should be the list of feature names corresponding to the columns used for the model input
+
+    if len(shap_values_list) != len(feature_names_list):
+        print(f"Warning: SHAP values length ({len(shap_values_list)}) does not match feature names length ({len(feature_names_list)}).")
+        # This might happen if the feature alignment failed somewhere. Proceed carefully or return empty.
+        # For now, let's assume they align correctly based on the model's training feature order.
+        # If lengths differ significantly, the explanation might be misleading.
+
+    # Create a list of dictionaries for easier handling in the template
+    shap_explanation = [
+        {"feature": feat, "shap_value": val}
+        for feat, val in zip(feature_names_list, shap_values_list)
+    ]
+
+    # Sort by absolute SHAP value to show most impactful features first
+    shap_explanation.sort(key=lambda x: abs(x["shap_value"]), reverse=True)
+
+    return shap_explanation
+
 
 # Heuristic diagnostic rules (RenalGuard-specific)
 def get_likely_kidney_condition(
@@ -1097,25 +1190,38 @@ def predict():
         if uploaded_file and uploaded_file.filename:
             df = pd.read_csv(uploaded_file)
         else:
-            # --- CRITICAL FIX: Extract only relevant form data based on model_type ---
-            if model_type == "clinical":
-                base_cols = FORM_COLUMNS_KIDNEY_CLINICAL # Use the list defined in app.py
-            else: # lifestyle
-                base_cols = FORM_COLUMNS_KIDNEY_LIFESTYLE # Use the list defined in app.py
-
+            # Use the appropriate form columns list based on the model type
+            base_cols = FORM_COLUMNS_KIDNEY_CLINICAL if model_type == "clinical" else FORM_COLUMNS_KIDNEY_LIFESTYLE
             user_data = {}
             for c in base_cols:
-                # Get value from form
+                # Get value from form, handle aliases if needed
                 val = request.form.get(c)
-                # Optional: Add logic here if certain values need to be converted
-                # (e.g., 'Yes'/'No' to 1/0, or string numbers to floats)
-                # For now, assume the form sends the correct data type or a string representation
+                if val is None:
+                    # Add alias mapping here if needed, e.g., 'gender' -> 'RIAGENDR'
+                    # Example: if c == "RIAGENDR": val = request.form.get("gender")
+                    pass # No aliases defined in this example
                 user_data[c] = val
             df = pd.DataFrame([user_data])
 
-        # --- Predict ---
-        # Ensure the model type passed here matches the one used to select base_cols
-        results = prepare_and_predict(df, model_type)
+        # --- Predict (Updated to receive raw input for SHAP) ---
+        results, raw_input_for_shap = prepare_and_predict(df, model_type) # Unpack the tuple
+
+        # --- Generate SHAP Explanation (if SHAP is available) ---
+        shap_explanation = []
+        try:
+            if model_type == "clinical":
+                model_for_shap = clinical_model
+                feature_names_for_shap = MODEL_INPUT_COLUMNS_KIDNEY_CLINICAL # Use the list the model expects
+            else: # lifestyle
+                model_for_shap = lifestyle_model
+                feature_names_for_shap = MODEL_INPUT_COLUMNS_KIDNEY_LIFESTYLE # Use the list the model expects
+
+            shap_explanation = generate_shap_explanation(raw_input_for_shap, model_for_shap, feature_names_for_shap)
+            print(f"Generated SHAP explanation: {shap_explanation[:3]}...") # Log first 3 for debugging
+        except Exception as e:
+            print(f"Error calling generate_shap_explanation: {e}")
+            import traceback
+            traceback.print_exc()
 
         # --- Post-Success Logic (saving records, session update) ---
         if user_id := session.get("user_id"):
@@ -1128,8 +1234,10 @@ def predict():
                 }).execute()
             except Exception as e:
                 print(f"Error saving record for user {user_id}: {e}")
+                # Flash a warning but allow results to be shown
                 flash("⚠️ Warning: Result not saved to your history.", "warning")
         else:
+            # Non-logged-in user: update session time
             session['last_form_time'] = datetime.now().isoformat()
 
         # --- Prepare Results for Template ---
@@ -1146,7 +1254,7 @@ def predict():
         # Use .get() with defaults to handle missing columns gracefully
         likely_condition, suggestions = get_likely_kidney_condition(
             age=single.get("RIDAGEYR"),
-            bmi=single.get("BMXBMI", 0),
+            bmi=single.get("BMXBMI"),
             serum_creatinine=single.get("LBXSCR", 0),
             blood_urea_nitrogen=single.get("LBXBUN", 0),
             egfr=single.get("LBXEGFR", 120), # Default high eGFR
@@ -1170,7 +1278,7 @@ def predict():
         results.to_csv(save_path, index=False)
         download_link = url_for("static", filename=f"results/{fname}")
 
-        # --- Render Result Template ---
+        # --- Render Result Template (Updated to pass SHAP explanation) ---
         return render_template(
             "result.html",
             result=readable,
@@ -1180,12 +1288,12 @@ def predict():
             suggestions=suggestions,
             tables=[results.to_html(classes="table table-striped", index=False)],
             download_link=download_link,
-            model_type=model_type
+            model_type=model_type,
+            shap_explanation=shap_explanation # Pass the explanation to the template
         )
 
     except Exception as e:
         print("Prediction error:", e)
-        import traceback
         traceback.print_exc() # Print the full traceback for detailed debugging
         flash(f"Error processing prediction: {str(e)}", "danger")
         return redirect(url_for("form"))
@@ -1882,5 +1990,5 @@ def health():
 
 if __name__ == "__main__":
     # For production use gunicorn (or fly/gunicorn)
-    port = int(os.getenv("PORT", 10000))
+    port = int(os.getenv("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=os.getenv("FLASK_DEBUG", "False") == "True")
