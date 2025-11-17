@@ -213,7 +213,7 @@
         {{ nav_item('/', 'Home') }}
         {{ nav_item('https://cardioguard-u3g4.onrender.com/about', 'About', is_external=true) }} <!-- Example External Link -->
         {{ nav_item('https://cardioguard-u3g4.onrender.com/contact', 'Contact', is_external=true) }} <!-- Example External Link -->
-        {{ nav_item('https://cardioguard-u3g4.onrender.com/resources', 'Resources', is_external=true) }} <!-- Example External Link -->
+        {{ nav_item('/resources', 'Resources') }} <!-- Example External Link -->
         {{ nav_item('/chat', 'RenalConsultant') }}
          <!-- Login / Logout logic -->
         {% if session.get('user_id') %}
@@ -268,7 +268,7 @@
         <div data-aos="fade-up" data-aos-delay="200">
           <h3 class="text-lg font-semibold text-white mb-4">Quick Links</h3>
           <ul class="space-y-2 text-base">
-            {% for link, text in [('/', 'Home'), ('https://cardioguard-u3g4.onrender.com/about', 'About Us'), ('https://cardioguard-u3g4.onrender.com/contact', 'Contact'), ('https://cardioguard-u3g4.onrender.com/resources', 'Resources')] %} <!-- Updated links list -->
+            {% for link, text in [('/', 'Home'), ('https://cardioguard-u3g4.onrender.com/about', 'About Us'), ('https://cardioguard-u3g4.onrender.com/contact', 'Contact'), ('/resources', 'Resources')] %} 
             <li>
               <a href="{{ link }}" class="hover:text-white transition-all duration-300 flex items-center group">
                 <span class="inline-block w-0 group-hover:w-3 transition-all duration-300">→</span> {{ text }}

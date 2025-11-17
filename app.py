@@ -130,11 +130,9 @@ os.makedirs(RESULTS_DIR, exist_ok=True)
 # --- RenalGuard Model Files ---
 CLINICAL_MODEL_FILE = os.getenv("CLINICAL_MODEL_FILE", "kidney_model_clinical.pkl")
 CLINICAL_ENCODERS_FILE = os.getenv("CLINICAL_ENCODERS_FILE", "preprocessing_info_cli.pkl") # For kidney clinical
-CLINICAL_TEMPLATE_FILE = os.getenv("CLINICAL_TEMPLATE_FILE", "kidney_clinical_template.csv") # Placeholder, might not need exact template
 
 LIFESTYLE_MODEL_FILE = os.getenv("LIFESTYLE_MODEL_FILE", "kidney_model_lifestyle.pkl")
 LIFESTYLE_ENCODERS_FILE = os.getenv("LIFESTYLE_ENCODERS_FILE", "preprocessing_info_gen.pkl") # For kidney lifestyle
-LIFESTYLE_TEMPLATE_FILE = os.getenv("LIFESTYLE_TEMPLATE_FILE", "kidney_lifestyle_template.csv") # Placeholder, might not need exact template
 
 REMOTE_MODEL_BASE = os.getenv("REMOTE_MODEL_BASE", "").rstrip("/")
 
@@ -175,29 +173,25 @@ else:
     print("⚠️ No AI provider configured (GROQ or OpenAI). Chat endpoint will return an error unless keys installed.")
 
 # Input columns (forms) - These should match the features used in your training script
-# Example placeholders - replace with actual feature names from your X_gen.columns and X_cli.columns
-# For example, if your lifestyle model used ['RIDAGEYR', 'RIAGENDR', 'BMXBMI', ...]
-# and clinical used ['LBXSCR', 'LBXBUN', 'LBXGLU', ...]
-BASE_COLUMNS_KIDNEY_LIFESTYLE = [
-    "RIDAGEYR", "RIAGENDR", "RIDRETH3", "DMDEDUC2", "DMDMARTL",
-    "BMXBMI", "BMXWAIST",
-    "SMQ020", "SMQ040", "SMQ077",  # smoking
-    "ALQ101", "ALQ130",  # alcohol
-    "PADACTTV", "PAQ605",  # physical activity
-    "DIQ010",  # diabetes self-report
-    "BPQ020",  # hypertension self-report
-    "MCQ160E"  # family history of kidney disease
-    # Add more as needed from your training script
+# --- CRITICAL: Define the exact features each model expects based on your training data ---
+# Clinical model was trained on these features (excluding KIDNEY_DISEASE which is the target):
+MODEL_INPUT_COLUMNS_KIDNEY_CLINICAL = [
+    "LBXSCR", "LBXGLU", "LBXGH", "LBDHDD", "LBDLDL", "LBXPLTSI"
+    # Ensure this list matches *exactly* what was fed into the model during training
+    # The target variable 'KIDNEY_DISEASE' should NOT be included here.
 ]
-# Example placeholders - replace with actual feature names from your training script
-BASE_COLUMNS_KIDNEY_CLINICAL = [
-    "LBXSCR", "LBXBUN", "LBXEGFR",  # kidney function markers
-    "LBXGLU", "LBXGH",  # glucose/HbA1c
-    "LBDHDD", "LBDLDL", "LBXTCA",  # lipids
-    "BPXSY1", "BPXDI1",  # systolic/diastolic BP
-    "LBXPLTSI"  # platelets
-    # Add more as needed from your training script
+# Lifestyle model was trained on these features (excluding KIDNEY_DISEASE which is the target):
+MODEL_INPUT_COLUMNS_KIDNEY_LIFESTYLE = [
+    "RIDAGEYR", "RIAGENDR", "RIDRETH3", "DMDEDUC2", "BMXBMI", "BMXWAIST",
+    "SMQ020", "SMQ040", "ALQ130", "DIQ010", "BPQ020", "MCQ160E"
+    # Ensure this list matches *exactly* what was fed into the model during training
+    # The target variable 'KIDNEY_DISEASE' should NOT be included here.
 ]
+
+# These lists define the inputs shown on the form - they can be more than the model inputs
+# For now, using the same as model inputs as requested. You will update form.html later.
+FORM_COLUMNS_KIDNEY_CLINICAL = MODEL_INPUT_COLUMNS_KIDNEY_CLINICAL
+FORM_COLUMNS_KIDNEY_LIFESTYLE = MODEL_INPUT_COLUMNS_KIDNEY_LIFESTYLE
 
 # ============================================================
 # Virtual Meeting System (Jitsi) Helpers
@@ -295,15 +289,16 @@ def ensure_model_files(timeout=60):
         except Exception as e:
             print("❌ failed to download", fname, e)
 
-
-# Load models & encoders (updated names for kidney)
+# Load models & encoders
 def load_models():
     print("🔄 Loading models & encoders...")
     clinical_model = joblib.load(CLINICAL_MODEL_FILE)
-    clinical_encoders_info = joblib.load(CLINICAL_ENCODERS_FILE) # Load the info file containing encoders and column lists
+    clinical_encoders_info = joblib.load(CLINICAL_ENCODERS_FILE)
+    # CLINICAL_FEATURE_COLUMNS = clinical_template_df.columns.tolist() # Not needed if using original column names from training
 
     lifestyle_model = joblib.load(LIFESTYLE_MODEL_FILE)
-    lifestyle_encoders_info = joblib.load(LIFESTYLE_ENCODERS_FILE) # Load the info file for lifestyle
+    lifestyle_encoders_info = joblib.load(LIFESTYLE_ENCODERS_FILE)
+    # LIFESTYLE_FEATURE_COLUMNS = lifestyle_template_df.columns.tolist() # Not needed if using original column names from training
 
     print("✅ Models loaded")
     return (clinical_model, clinical_encoders_info,
@@ -324,85 +319,131 @@ def prepare_and_predict(df_raw: pd.DataFrame, model_type: str) -> pd.DataFrame:
     # For now, assume headers exist matching training features
     if all(isinstance(c, int) for c in df.columns):
         if model_type == "clinical":
-            df = df.iloc[:, :len(BASE_COLUMNS_KIDNEY_CLINICAL)]
-            df.columns = BASE_COLUMNS_KIDNEY_CLINICAL[:df.shape[1]]
+            df = df.iloc[:, :len(FORM_COLUMNS_KIDNEY_CLINICAL)]
+            df.columns = FORM_COLUMNS_KIDNEY_CLINICAL[:df.shape[1]]
         else:
-            df = df.iloc[:, :len(BASE_COLUMNS_KIDNEY_LIFESTYLE)]
-            df.columns = BASE_COLUMNS_KIDNEY_LIFESTYLE[:df.shape[1]]
+            df = df.iloc[:, :len(FORM_COLUMNS_KIDNEY_LIFESTYLE)]
+            df.columns = FORM_COLUMNS_KIDNEY_LIFESTYLE[:df.shape[1]]
 
     # --- RenalGuard Specific Preprocessing ---
     # Clinical pipeline: Apply encoders loaded from training
     if model_type == "clinical":
         encoders_info = clinical_encoders_info
         model = clinical_model
-        feature_columns = BASE_COLUMNS_KIDNEY_CLINICAL # Use the list of expected columns from training
+        model_input_columns = MODEL_INPUT_COLUMNS_KIDNEY_CLINICAL # Use the specific columns the model expects
     else: # lifestyle
         encoders_info = lifestyle_encoders_info
         model = lifestyle_model
-        feature_columns = BASE_COLUMNS_KIDNEY_LIFESTYLE # Use the list of expected columns from training
+        model_input_columns = MODEL_INPUT_COLUMNS_KIDNEY_LIFESTYLE # Use the specific columns the model expects
 
     # Get the encoders and column lists from the info file
     encoders = encoders_info['encoders']
     num_cols = encoders_info['numerical_columns']
     cat_cols = encoders_info['categorical_columns']
 
-    # Prepare the input dataframe with only the required features
-    X_input = df.reindex(columns=feature_columns, fill_value=0) # Fill missing features with 0 or handle differently
+    # Prepare the input dataframe with only the features the model expects
+    X_input_for_model = df.reindex(columns=model_input_columns, fill_value=0) # Fill missing model features with 0
 
-    # --- CRITICAL FIX: Ensure numerical columns are numeric before any numerical operations ---
-    # Convert numerical columns to float, coercing errors to NaN
+    # --- Apply Preprocessing Steps Saved During Training ---
+    # Convert numerical columns (as defined during training) to float
     for col in num_cols:
-        if col in X_input.columns:
-            X_input[col] = pd.to_numeric(X_input[col], errors='coerce')
+        if col in X_input_for_model.columns:
+            X_input_for_model[col] = pd.to_numeric(X_input_for_model[col], errors='coerce')
 
-    # Apply preprocessing steps as done during training
-    # 1. Handle numerical columns: Impute with median (as done in training script)
+    # Handle numerical columns: Impute with median (as done in training script)
     # Calculate median from the numerical data (which is now guaranteed to be numeric)
-    # Use only the columns that exist in X_input and are listed as numerical
-    existing_num_cols = [col for col in num_cols if col in X_input.columns]
+    # Use only the columns that exist in X_input_for_model and are listed as numerical
+    existing_num_cols = [col for col in num_cols if col in X_input_for_model.columns]
     if existing_num_cols:
-        X_num_imputed = X_input[existing_num_cols].copy()
-        # Calculate the median for each existing numerical column
-        medians = X_num_imputed.median() # This should now work correctly
+        X_num_imputed = X_input_for_model[existing_num_cols].copy()
+        # Calculate the median for each existing numerical column based on the input data
+        # (This is a simplification; ideally, you'd use the median calculated during training)
+        medians = X_num_imputed.median()
         # Fill NaN values with the calculated medians
         X_num_imputed = X_num_imputed.fillna(medians)
     else:
-        # If no numerical columns are present, create an empty DataFrame with the correct index
-        X_num_imputed = pd.DataFrame(index=X_input.index)
+        # If no numerical columns are present for this model type, create an empty DataFrame with the correct index
+        X_num_imputed = pd.DataFrame(index=X_input_for_model.index)
 
-    # 2. Handle categorical columns: Impute with 'missing', then encode
-    X_cat_encoded = X_input[cat_cols].copy() if cat_cols else pd.DataFrame(index=X_input.index) # Handle case where cat_cols is empty
+    # Handle categorical columns: Impute with 'missing', then encode using SAVED encoders
+    X_cat_encoded = X_input_for_model[cat_cols].copy() if cat_cols else pd.DataFrame(index=X_input_for_model.index) # Handle case where cat_cols is empty
     for col in cat_cols:
         if col in X_cat_encoded.columns:
-            le = encoders[col]
+            le = encoders[col] # Retrieve the encoder fitted during training
             # Impute unseen labels or missing values with 'missing' first
             X_cat_encoded[col] = X_cat_encoded[col].fillna('missing')
             # Transform using the fitted encoder
             # Handle unseen labels by mapping them to the index of 'missing' if 'missing' was a category during training
-            # This is complex. A simpler fallback: map unseen to the first category.
+            # Get the classes known to the encoder
+            known_classes = le.classes_
+            # Identify values in the input that are not in the known classes
+            input_values = X_cat_encoded[col].values
+            unseen_mask = ~np.isin(input_values, known_classes)
+            if unseen_mask.any():
+                print(f"Warning: Unseen labels in {col}: {set(input_values[unseen_mask])}. Mapping to 'missing' index.")
+                # Replace unseen labels with 'missing'
+                X_cat_encoded.loc[unseen_mask, col] = 'missing'
+
+            # Now, transform the (potentially updated) values
             try:
                 X_cat_encoded[col] = le.transform(X_cat_encoded[col])
             except ValueError as e:
-                print(f"Warning: Unseen label in {col}: {e}. Mapping to first category index (0).")
-                # Find the index of 'missing' if it was a known category, otherwise default to 0
-                # A safer approach: re-fit the encoder or use a more robust handling strategy.
-                # For now, using 0 as a fallback.
-                X_cat_encoded[col] = 0 # Map to first category index as fallback
+                print(f"Critical Error: Failed to transform {col} even after handling unseen labels: {e}")
+                # As a last resort, map everything to the index of the first known class (often 'missing' if it was present during training)
+                first_class_index = 0
+                X_cat_encoded[col] = first_class_index
+                print(f"  - Mapped entire column {col} to index {first_class_index} as fallback.")
 
     # Combine processed numerical and categorical features
     X_processed = pd.concat([X_num_imputed, X_cat_encoded], axis=1)
 
-    # Ensure column order matches training (only for columns that exist in both)
-    # It's crucial that the order and presence of columns match exactly what the model expects.
-    # We already used reindex earlier to ensure feature_columns are present.
-    # X_final should have the same columns as feature_columns, in the same order.
-    X_final = X_processed.reindex(columns=feature_columns, fill_value=0) # Reindex again to ensure final order and presence
+    # Ensure column order matches the order expected by the model (based on training feature list)
+    # The model expects features in the exact same order as during training.
+    # The model was trained on the *final* features after preprocessing (num + encoded cat).
+    # The `num_cols` and `cat_cols` lists were used for preprocessing.
+    # The `X_processed` now has columns from `num_cols` (processed) and `cat_cols` (encoded).
+    # We need to ensure `X_processed` has the exact columns (names and order) that the model expects.
 
-    # Convert to numpy array for prediction
-    X = X_final.values
+    # The order of columns in X_processed should match the order they were in when the model was trained.
+    # The model was trained on the output of the preprocessing pipeline used *during training*.
+    # The `reindex` here should align `X_processed` with the *final* column order expected by the model.
+    # This order is determined by the order of `num_cols` and `cat_cols` as they were processed during training
+    # and saved in `encoders_info`. The `model_input_columns` list represents the *input* names,
+    # but the *output* (after encoding) might have different names (e.g., 'cat_col_1', 'cat_col_2') if one-hot was used.
+    # Since you used LabelEncoder, the names stay the same, but values change.
+    # The `reindex` should use the *names* that the model was trained on.
+    # The `feature_columns` list from the *training pipeline* is crucial.
+    # If `LabelEncoder` was used, the column names remain the same as `num_cols + cat_cols` (in the order they were processed).
+    # Therefore, the final reindex should be based on the combined list of `num_cols` and `cat_cols` in the order they were fed to the model during training.
+
+    # This is the tricky part. The order must be *exactly* how the model saw them during training.
+    # The `encoders_info` should ideally contain the *final* column order used for training.
+    # For now, assume the order is `num_cols` followed by `cat_cols` as processed by the training script.
+    # IMPORTANT: This is a potential source of error if the training script's final feature order was different.
+    # You might need to adjust `final_column_order` based on how the training script constructed the final feature matrix.
+
+    # The final column order for the model input *after* all preprocessing (including encoding) should be the order
+    # the model was trained on. This is typically the order of the features *after* they were processed by the
+    # training pipeline (e.g., after scaling, encoding). If the saved encoders_info doesn't explicitly state
+    # the final order, we assume it's num_cols first, then encoded cat_cols.
+    # However, the `model_input_columns` list represents the *original* input names. We need the *processed* names.
+    # If only LabelEncoder was used, the names remain the same. So, the final order should be num_cols + cat_cols.
+    final_column_order = num_cols + cat_cols # This assumes numerical features came first, then encoded categorical
+
+    X_final = X_processed.reindex(columns=final_column_order, fill_value=0) # Reindex to model's expected order
+
+    # Debug: Print shapes and columns if needed
+    # print(f"prepare_and_predict - Model expects features based on training: num_cols={num_cols}, cat_cols={cat_cols}")
+    # print(f"prepare_and_predict - Final order: {final_column_order}")
+    # print(f"prepare_and_predict - X_final shape: {X_final.shape}, columns: {list(X_final.columns)}")
+    # print(f"prepare_and_predict - Model input columns expected: {model_input_columns}")
+
+
+    # Convert to numpy array for prediction (ensure it's the correct dtype, usually float64 for numerical inputs)
+    X = X_final.values.astype(np.float64)
 
     # --- Prediction ---
-    df_out_base = df.copy() # Keep original input for output
+    df_out_base = df.copy() # Keep original input for output (before selecting model features)
     if hasattr(model, "predict_proba"):
         probs = model.predict_proba(X)[:, 1] # Probability of positive class (disease)
     else:
@@ -416,6 +457,7 @@ def prepare_and_predict(df_raw: pd.DataFrame, model_type: str) -> pd.DataFrame:
     preds = model.predict(X)
 
     # Build output DataFrame
+    # Use the original df (before selecting model features) to preserve all form inputs for output
     out_df = df_out_base.copy()
     out_df["Prediction"] = preds # 0 or 1
     out_df["Prob_Pos"] = np.round(probs, 4) # Probability of having the condition
@@ -610,7 +652,7 @@ def get_user_role(user_id):
     try:
         # Check 'users' table first
         user_data = supabase.table("users").select("role").eq("id", user_id).single().execute()
-        if user_data.data:
+        if user_data:
             return user_data.data.get("role", "user")
     except Exception as e:
         # If not found in 'users', proceed to check other tables
@@ -829,7 +871,7 @@ def register():
         # Check if user exists
         try:
             existing = supabase.table("users").select("id, email").eq("email", email).execute()
-            if existing and existing.data:
+            if existing and existing:
                 flash("Email already registered. Try logging in.", "warning")
                 return redirect(url_for("login"))
         except Exception as e:
@@ -891,7 +933,7 @@ def login():
             flash("Login temporarily unavailable. Please try again later.", "danger")
             return redirect(url_for("login"))
 
-        if user_resp and user_resp.data:
+        if user_resp and user_resp:
             user = user_resp.data[0]
             stored_hash = user.get("password_hash")
             if stored_hash:
@@ -999,13 +1041,15 @@ def auth_callback(provider):
 # Routes - Main UI Pages (Adjusted for RenalGuard)
 # ============================================================
 
+# --- Removed /about, /contact
+
 @app.route("/")
 def index():
     # Option 1: Render the main form directly on the index page
     return render_template(
         "form.html", # Use the form template as the main page
-        BASE_COLUMNS_CLINICAL=BASE_COLUMNS_KIDNEY_CLINICAL,
-        BASE_COLUMNS_LIFESTYLE=BASE_COLUMNS_KIDNEY_LIFESTYLE
+        FORM_COLUMNS_CLINICAL=FORM_COLUMNS_KIDNEY_CLINICAL,
+        FORM_COLUMNS_LIFESTYLE=FORM_COLUMNS_KIDNEY_LIFESTYLE
     )
     # Option 2: Render a simple landing page that redirects to /form
     # return render_template("index.html") # If you create a simple index.html
@@ -1022,9 +1066,13 @@ def form():
                 return redirect(url_for('index'))
     return render_template(
         "form.html",
-        BASE_COLUMNS_CLINICAL=BASE_COLUMNS_KIDNEY_CLINICAL,
-        BASE_COLUMNS_LIFESTYLE=BASE_COLUMNS_KIDNEY_LIFESTYLE
+        FORM_COLUMNS_CLINICAL=FORM_COLUMNS_KIDNEY_CLINICAL,
+        FORM_COLUMNS_LIFESTYLE=FORM_COLUMNS_KIDNEY_LIFESTYLE
     )
+    
+@app.route("/resources")
+def resources():
+    return render_template("resources.html")
 
 # ============================================================
 # Routes - Prediction & AI (RenalGuard Specific)
@@ -1032,10 +1080,9 @@ def form():
 
 
 @app.route("/predict", methods=["POST"])
-@check_subscription_access # Apply access control
+#@check_subscription_access # Apply access control
 def predict():
     try:
-        # --- Get Model Type ---
         raw_type = (request.form.get("model_type") or "clinical").lower()
         # Map user-friendly names to internal types
         model_map = {
@@ -1044,22 +1091,21 @@ def predict():
             "kidney_lifestyle": "lifestyle",
             "lifestyle": "lifestyle"
         }
-        model_type = model_map.get(raw_type, "clinical") # Default to clinical if unknown
+        model_type = model_map.get(raw_type, "clinical")
 
-        # --- Get Data ---
         uploaded_file = request.files.get("file")
         if uploaded_file and uploaded_file.filename:
             df = pd.read_csv(uploaded_file)
         else:
-            # Get the base columns for the selected model type
+            # --- CRITICAL FIX: Extract only relevant form data based on model_type ---
             if model_type == "clinical":
-                base_cols = BASE_COLUMNS_KIDNEY_CLINICAL # Use the updated list from app.py
+                base_cols = FORM_COLUMNS_KIDNEY_CLINICAL # Use the list defined in app.py
             else: # lifestyle
-                base_cols = BASE_COLUMNS_KIDNEY_LIFESTYLE # Use the updated list from app.py
+                base_cols = FORM_COLUMNS_KIDNEY_LIFESTYLE # Use the list defined in app.py
 
             user_data = {}
             for c in base_cols:
-                # Get the value directly using the feature name as the form input name
+                # Get value from form
                 val = request.form.get(c)
                 # Optional: Add logic here if certain values need to be converted
                 # (e.g., 'Yes'/'No' to 1/0, or string numbers to floats)
@@ -1143,7 +1189,6 @@ def predict():
         traceback.print_exc() # Print the full traceback for detailed debugging
         flash(f"Error processing prediction: {str(e)}", "danger")
         return redirect(url_for("form"))
-
 
 
 # AI chat endpoint (JSON API) - RenalGuard specific
@@ -1325,7 +1370,7 @@ def doctor_availability():
     user_id = session.get("user_id")
     # find doctor record
     doctor_data = supabase.table("doctors").select("id").eq("user_id", user_id).single().execute()
-    if not doctor_data.data:
+    if not doctor_data:
         flash("Doctor profile not found.", "danger")
         return redirect(url_for("login"))
 

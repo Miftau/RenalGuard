@@ -93,8 +93,8 @@
             <h3 class="font-medium text-gray-800 mb-1">Upload Patient Data (CSV)</h3>
             <p class="text-sm text-gray-600 mb-4">
                 Ensure columns match the selected model's requirements.
-                <br><strong>Clinical Model Features:</strong> {{ BASE_COLUMNS_CLINICAL | join(", ") }}
-                <br><strong>Lifestyle Model Features:</strong> {{ BASE_COLUMNS_LIFESTYLE | join(", ") }}
+                <br><strong>Clinical Model Features:</strong> {{ FORM_COLUMNS_CLINICAL | join(", ") }}
+                <br><strong>Lifestyle Model Features:</strong> {{ FORM_COLUMNS_LIFESTYLE | join(", ") }}
             </p>
             <input type="file" name="file" accept=".csv" class="hidden" id="csvFileInput">
             <label for="csvFileInput" class="cursor-pointer inline-block bg-white border border-gray-300 rounded-lg px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 shadow-sm">
@@ -112,136 +112,9 @@
             <!-- Example fields - Replace with actual feature names from your training script -->
             <!-- Row 1 -->
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1.5">Age (years)</label>
-              <input name="RIDAGEYR" type="number" step="1" required class="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition">
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1.5">Gender</label>
-              <select name="RIAGENDR" required class="w-full border border-gray-300 rounded-xl px-4 py-2.5 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition">
-                <option value="">Select...</option>
-                <option value="1">Male</option>
-                <option value="2">Female</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1.5">Ethnicity (RIDRETH3)</label>
-              <select name="RIDRETH3" required class="w-full border border-gray-300 rounded-xl px-4 py-2.5 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition">
-                <option value="">Select...</option>
-                <option value="1">Mexican American</option>
-                <option value="2">Other Hispanic</option>
-                <option value="3">Non-Hispanic White</option>
-                <option value="4">Non-Hispanic Black</option>
-                <option value="5">Other Race</option>
-              </select>
-            </div>
-
-            <!-- Row 2 -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1.5">Education (DMDEDUC2)</label>
-              <select name="DMDEDUC2" required class="w-full border border-gray-300 rounded-xl px-4 py-2.5 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition">
-                <option value="">Select...</option>
-                <option value="1">Less than 9th grade</option>
-                <option value="2">9-11th grade</option>
-                <option value="3">High school graduate</option>
-                <option value="4">Some college</option>
-                <option value="5">College graduate</option>
-                <option value="7">Refused</option>
-                <option value="9">Don't know</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1.5">Marital Status (DMDMARTL)</label>
-              <select name="DMDMARTL" required class="w-full border border-gray-300 rounded-xl px-4 py-2.5 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition">
-                <option value="">Select...</option>
-                <option value="1">Married</option>
-                <option value="2">Widowed</option>
-                <option value="3">Divorced</option>
-                <option value="4">Separated</option>
-                <option value="5">Never married</option>
-                <option value="6">Living with partner</option>
-                <option value="77">Refused</option>
-                <option value="99">Don't know</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1.5">BMI</label>
-              <input name="BMXBMI" type="number" step="0.1" required class="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition">
-            </div>
-
-            <!-- Row 3 -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1.5">Waist Circumference (cm)</label>
-              <input name="BMXWAIST" type="number" step="0.1" class="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition">
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1.5">Smoked 100 Cigs? (SMQ020)</label>
-              <select name="SMQ020" class="w-full border border-gray-300 rounded-xl px-4 py-2.5 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition">
-                <option value="">Select...</option>
-                <option value="1">Yes</option>
-                <option value="2">No</option>
-                <option value="7">Refused</option>
-                <option value="9">Don't know</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1.5">Alcohol Use (ALQ101)</label>
-              <select name="ALQ101" class="w-full border border-gray-300 rounded-xl px-4 py-2.5 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition">
-                <option value="">Select...</option>
-                <option value="1">Yes</option>
-                <option value="2">No</option>
-                <option value="7">Refused</option>
-                <option value="9">Don't know</option>
-              </select>
-            </div>
-
-            <!-- Row 4 -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1.5">Diabetes (DIQ010)</label>
-              <select name="DIQ010" class="w-full border border-gray-300 rounded-xl px-4 py-2.5 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition">
-                <option value="">Select...</option>
-                <option value="1">Yes</option>
-                <option value="2">No</option>
-                <option value="3">Borderline</option>
-                <option value="7">Refused</option>
-                <option value="9">Don't know</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1.5">Hypertension (BPQ020)</label>
-              <select name="BPQ020" class="w-full border border-gray-300 rounded-xl px-4 py-2.5 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition">
-                <option value="">Select...</option>
-                <option value="1">Yes</option>
-                <option value="2">No</option>
-                <option value="7">Refused</option>
-                <option value="9">Don't know</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1.5">Family Kidney Disease (MCQ160E)</label>
-              <select name="MCQ160E" class="w-full border border-gray-300 rounded-xl px-4 py-2.5 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition">
-                <option value="">Select...</option>
-                <option value="1">Yes</option>
-                <option value="2">No</option>
-                <option value="7">Refused</option>
-                <option value="9">Don't know</option>
-              </select>
-            </div>
-
-            <!-- Row 5 -->
-            <div>
               <label class="block text-sm font-medium text-gray-700 mb-1.5">Serum Creatinine (mg/dL)</label>
-              <input name="LBXSCR" type="number" step="0.01" required class="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition">
+              <input name="LBXSCR" type="number" step="0.01" class="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition">
             </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1.5">Blood Urea Nitrogen (mg/dL)</label>
-              <input name="LBXBUN" type="number" step="0.1" required class="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition">
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1.5">eGFR (mL/min/1.73m²)</label>
-              <input name="LBXEGFR" type="number" step="0.1" required class="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition">
-            </div>
-
-            <!-- Row 6 -->
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1.5">Glucose (mg/dL)</label>
               <input name="LBXGLU" type="number" step="0.1" class="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition">
@@ -250,35 +123,21 @@
               <label class="block text-sm font-medium text-gray-700 mb-1.5">HbA1c (%)</label>
               <input name="LBXGH" type="number" step="0.1" class="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition">
             </div>
+
+            <!-- Row 2 -->
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1.5">HDL Cholesterol (mg/dL)</label>
               <input name="LBDHDD" type="number" step="0.1" class="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition">
             </div>
-
-            <!-- Row 7 -->
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1.5">LDL Cholesterol (mg/dL)</label>
               <input name="LBDLDL" type="number" step="0.1" class="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition">
             </div>
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1.5">Total Cholesterol (mg/dL)</label>
-              <input name="LBXTCA" type="number" step="0.1" class="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition">
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1.5">Systolic BP (mmHg)</label>
-              <input name="BPXSY1" type="number" step="1" class="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition">
-            </div>
-
-            <!-- Row 8 -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1.5">Diastolic BP (mmHg)</label>
-              <input name="BPXDI1" type="number" step="1" class="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition">
-            </div>
-            <div>
               <label class="block text-sm font-medium text-gray-700 mb-1.5">Platelet Count (1000/uL)</label>
               <input name="LBXPLTSI" type="number" step="1" class="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition">
             </div>
-            <!-- Add more fields as needed from your training script -->
+            <!-- Add more fields if your model input list expands beyond 6 -->
           </div>
 
           <!-- Lifestyle Model Fields -->
@@ -287,11 +146,11 @@
             <!-- Row 1 -->
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1.5">Age (years)</label>
-              <input name="RIDAGEYR" type="number" step="1" required class="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition">
+              <input name="RIDAGEYR" type="number" step="1" class="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition">
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1.5">Gender</label>
-              <select name="RIAGENDR" required class="w-full border border-gray-300 rounded-xl px-4 py-2.5 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition">
+              <select name="RIAGENDR" class="w-full border border-gray-300 rounded-xl px-4 py-2.5 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition">
                 <option value="">Select...</option>
                 <option value="1">Male</option>
                 <option value="2">Female</option>
@@ -299,7 +158,7 @@
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1.5">Ethnicity (RIDRETH3)</label>
-              <select name="RIDRETH3" required class="w-full border border-gray-300 rounded-xl px-4 py-2.5 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition">
+              <select name="RIDRETH3" class="w-full border border-gray-300 rounded-xl px-4 py-2.5 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition">
                 <option value="">Select...</option>
                 <option value="1">Mexican American</option>
                 <option value="2">Other Hispanic</option>
@@ -312,7 +171,7 @@
             <!-- Row 2 -->
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1.5">Education (DMDEDUC2)</label>
-              <select name="DMDEDUC2" required class="w-full border border-gray-300 rounded-xl px-4 py-2.5 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition">
+              <select name="DMDEDUC2" class="w-full border border-gray-300 rounded-xl px-4 py-2.5 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition">
                 <option value="">Select...</option>
                 <option value="1">Less than 9th grade</option>
                 <option value="2">9-11th grade</option>
@@ -324,29 +183,15 @@
               </select>
             </div>
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1.5">Marital Status (DMDMARTL)</label>
-              <select name="DMDMARTL" required class="w-full border border-gray-300 rounded-xl px-4 py-2.5 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition">
-                <option value="">Select...</option>
-                <option value="1">Married</option>
-                <option value="2">Widowed</option>
-                <option value="3">Divorced</option>
-                <option value="4">Separated</option>
-                <option value="5">Never married</option>
-                <option value="6">Living with partner</option>
-                <option value="77">Refused</option>
-                <option value="99">Don't know</option>
-              </select>
-            </div>
-            <div>
               <label class="block text-sm font-medium text-gray-700 mb-1.5">BMI</label>
-              <input name="BMXBMI" type="number" step="0.1" required class="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition">
+              <input name="BMXBMI" type="number" step="0.1" class="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition">
             </div>
-
-            <!-- Row 3 -->
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1.5">Waist Circumference (cm)</label>
               <input name="BMXWAIST" type="number" step="0.1" class="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition">
             </div>
+
+            <!-- Row 3 -->
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1.5">Smoked 100 Cigs? (SMQ020)</label>
               <select name="SMQ020" class="w-full border border-gray-300 rounded-xl px-4 py-2.5 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition">
@@ -358,8 +203,18 @@
               </select>
             </div>
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1.5">Alcohol Use (ALQ101)</label>
-              <select name="ALQ101" class="w-full border border-gray-300 rounded-xl px-4 py-2.5 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition">
+              <label class="block text-sm font-medium text-gray-700 mb-1.5">Smoked 20+ Cigs/day? (SMQ040)</label>
+              <select name="SMQ040" class="w-full border border-gray-300 rounded-xl px-4 py-2.5 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition">
+                <option value="">Select...</option>
+                <option value="1">Yes</option>
+                <option value="2">No</option>
+                <option value="7">Refused</option>
+                <option value="9">Don't know</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1.5">Alcohol Use (ALQ130)</label>
+              <select name="ALQ130" class="w-full border border-gray-300 rounded-xl px-4 py-2.5 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition">
                 <option value="">Select...</option>
                 <option value="1">Yes</option>
                 <option value="2">No</option>
@@ -400,23 +255,7 @@
                 <option value="9">Don't know</option>
               </select>
             </div>
-
-            <!-- Row 5 -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1.5">Physical Activity (PADACTTV)</label>
-              <input name="PADACTTV" type="number" step="1" class="w-full border border-gray-300 rounded-xl px-4 py-2.5 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition">
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1.5">Exercise (PAQ605)</label>
-              <select name="PAQ605" class="w-full border border-gray-300 rounded-xl px-4 py-2.5 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition">
-                <option value="">Select...</option>
-                <option value="1">Yes</option>
-                <option value="2">No</option>
-                <option value="7">Refused</option>
-                <option value="9">Don't know</option>
-              </select>
-            </div>
-            <!-- Add more fields as needed from your training script -->
+            <!-- Add more fields if your model input list expands beyond 12 -->
           </div>
         </div>
 
@@ -432,8 +271,6 @@
   </main>
 </div>
 
-<!-- ... (previous HTML code remains unchanged) ... -->
-
 <script>
   const modelSelector = document.getElementById('model_type');
   const inputSelector = document.getElementById('input_mode');
@@ -445,7 +282,9 @@
 
   // Helper function to toggle required attributes on a container
   function toggleRequired(container, required) {
-    const inputs = container.querySelectorAll('input[required], select[required]');
+    // Select *all* inputs and selects within the container that could potentially have 'required'
+    // This includes inputs, selects, and textareas if they were part of the form.
+    const inputs = container.querySelectorAll('input, select'); // Add textarea if needed
     inputs.forEach(el => {
       if (required) {
         // If it doesn't already have required, add it
@@ -483,13 +322,13 @@
     if (e.target.value === 'csv') {
       csvSection.classList.remove('hidden');
       manualSection.classList.add('hidden');
-      // If switching to CSV, ensure no manual fields are required
+      // If switching to CSV, ensure no manual fields (clinical or lifestyle) are required
       toggleRequired(clinicalFields, false);
       toggleRequired(lifestyleFields, false);
     } else {
       csvSection.classList.add('hidden');
       manualSection.classList.remove('hidden');
-      // If switching to manual, ensure fields for the *current* model are required
+      // If switching to manual, ensure fields for the *current* model are required based on the *model* selector
       if (modelSelector.value === 'kidney_lifestyle') {
           toggleRequired(lifestyleFields, true);
           toggleRequired(clinicalFields, false); // Ensure clinical is off if it was on
