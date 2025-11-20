@@ -24,30 +24,30 @@
   @keyframes slideUp { from { transform: translateY(40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
   .scale-hover { transition: all 0.3s ease; }
   .scale-hover:hover { transform: scale(1.05); box-shadow: 0 15px 30px rgba(0,0,0,0.1); }
-  .btn-pulse { 
-    animation: pulse 2s infinite; 
-    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+  .btn-pulse {
+    animation: pulse 2s infinite;
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); /* Changed color to green */
   }
-  @keyframes pulse { 
-    0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
-    70% { box-shadow: 0 0 0 15px rgba(239, 68, 68, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+  @keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); } /* Changed color */
+    70% { box-shadow: 0 0 0 15px rgba(34, 197, 94, 0); } /* Changed color */
+    100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); } /* Changed color */
   }
   .input-focus { transition: all 0.3s ease; }
-  .input-focus:focus { 
-    transform: translateY(-2px); 
-    box-shadow: 0 8px 20px rgba(239, 68, 68, 0.2); 
+  .input-focus:focus {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(34, 197, 94, 0.2); /* Changed color */
   }
   .faq-item { transition: all 0.4s ease; cursor: pointer; }
-  .faq-item:hover { 
-    background: linear-gradient(135deg, #fef2f2, #fdfdfd); 
-    transform: translateY(-4px); 
-    box-shadow: 0 10px 25px rgba(0,0,0,0.08); 
+  .faq-item:hover {
+    background: linear-gradient(135deg, #f0fdf4, #fdfdfd); /* Changed gradient to greenish */
+    transform: translateY(-4px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.08);
   }
-  .map-container { 
-    transition: all 0.5s ease; 
-    overflow: hidden; 
-    border-radius: 16px; 
+  .map-container {
+    transition: all 0.5s ease;
+    overflow: hidden;
+    border-radius: 16px;
   }
   .map-container:hover iframe { transform: scale(1.03); }
 </style>
@@ -55,14 +55,14 @@
 
 {% block content %}
 <!-- Hero Section -->
-<section class="bg-gradient-to-r from-red-50 to-white py-16 border-b">
+<section class="bg-gradient-to-r from-green-50 to-white py-16 border-b"> <!-- Changed gradient color -->
   <div class="container mx-auto px-4">
     <div class="max-w-3xl mx-auto text-center" data-aos="zoom-in">
       <h1 class="text-4xl md:text-5xl font-bold text-gray-800 mb-4 fade-in">Contact Us</h1>
       <p class="text-xl text-gray-600 mb-6 slide-up">
-        Have questions? We're here to help!
+        Have questions about your kidney health? We're here to help!
       </p>
-      <div class="w-24 h-1 bg-red-500 rounded-full mx-auto scale-hover" data-aos="flip-up" data-aos-delay="300"></div>
+      <div class="w-24 h-1 bg-green-500 rounded-full mx-auto scale-hover" data-aos="flip-up" data-aos-delay="300"></div> <!-- Changed color -->
     </div>
   </div>
 </section>
@@ -75,32 +75,32 @@
       <div data-aos="fade-right">
         <h2 class="text-3xl font-bold text-gray-800 mb-6 slide-up">Send us a message</h2>
         <p class="text-gray-600 mb-8 fade-in" data-aos="fade-up" data-aos-delay="100">
-          Have a question, feedback, or partnership inquiry? Our team is here to help you. 
-          Fill the form or reach us directly at <a href="mailto:support@heartpredict.ai" class="text-red-500 font-medium hover:underline scale-hover inline-block">support@heartpredict.ai</a>.
+          Have a question about kidney disease risk, feedback on our tool, or a partnership inquiry? Our team is here to help you.
+          Fill the form or reach us directly at <a href="mailto:support@renalguard.ai" class="text-green-500 font-medium hover:underline scale-hover inline-block">support@renalguard.ai</a>. <!-- Changed email -->
         </p>
 
         <form method="POST" class="space-y-6">
           <div data-aos="fade-up" data-aos-delay="150">
             <label for="name" class="block text-gray-700 mb-2">Full Name</label>
-            <input type="text" id="name" name="name" placeholder="John Doe" class="w-full p-3 border border-gray-300 rounded-lg input-focus focus:ring-2 focus:ring-red-500 focus:border-transparent" required>
+            <input type="text" id="name" name="name" placeholder="John Doe" class="w-full p-3 border border-gray-300 rounded-lg input-focus focus:ring-2 focus:ring-green-500 focus:border-transparent" required> <!-- Changed ring color -->
           </div>
-          
+
           <div data-aos="fade-up" data-aos-delay="200">
             <label for="email" class="block text-gray-700 mb-2">Email Address</label>
-            <input type="email" id="email" name="email" placeholder="john@example.com" class="w-full p-3 border border-gray-300 rounded-lg input-focus focus:ring-2 focus:ring-red-500 focus:border-transparent" required>
+            <input type="email" id="email" name="email" placeholder="john@example.com" class="w-full p-3 border border-gray-300 rounded-lg input-focus focus:ring-2 focus:ring-green-500 focus:border-transparent" required> <!-- Changed ring color -->
           </div>
-          
+
           <div data-aos="fade-up" data-aos-delay="250">
             <label for="subject" class="block text-gray-700 mb-2">Subject</label>
-            <input type="text" id="subject" name="subject" placeholder="How can we help?" class="w-full p-3 border border-gray-300 rounded-lg input-focus focus:ring-2 focus:ring-red-500 focus:border-transparent" required>
+            <input type="text" id="subject" name="subject" placeholder="How can we help with your kidney health?" class="w-full p-3 border border-gray-300 rounded-lg input-focus focus:ring-2 focus:ring-green-500 focus:border-transparent" required> <!-- Changed placeholder, ring color -->
           </div>
-          
+
           <div data-aos="fade-up" data-aos-delay="300">
             <label for="message" class="block text-gray-700 mb-2">Your Message</label>
-            <textarea id="message" name="message" placeholder="Type your message here..." class="w-full p-3 border border-gray-300 rounded-lg input-focus focus:ring-2 focus:ring-red-500 focus:border-transparent resize-none" rows="5" required></textarea>
+            <textarea id="message" name="message" placeholder="Tell us about your kidney health concerns or questions..." class="w-full p-3 border border-gray-300 rounded-lg input-focus focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none" rows="5" required></textarea> <!-- Changed placeholder, ring color -->
           </div>
-          
-          <button type="submit" class="bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-lg transition duration-300 w-full md:w-auto btn-pulse scale-hover" data-aos="zoom-in" data-aos-delay="400">
+
+          <button type="submit" class="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg transition duration-300 w-full md:w-auto btn-pulse scale-hover" data-aos="zoom-in" data-aos-delay="400"> <!-- Changed button color -->
             Send Message
           </button>
         </form>
@@ -109,41 +109,41 @@
       <!-- Contact Info & Map -->
       <div data-aos="fade-left">
         <h2 class="text-3xl font-bold text-gray-800 mb-6 slide-up">Contact Information</h2>
-        
+
         <div class="space-y-6 mb-10">
           <div class="flex items-start fade-in" data-aos="fade-up" data-aos-delay="100">
-            <div class="bg-red-100 p-3 rounded-full mr-4 animate-pulse">
-              <i class="fas fa-map-marker-alt text-red-500 text-xl"></i>
+            <div class="bg-green-100 p-3 rounded-full mr-4 animate-pulse"> <!-- Changed color -->
+              <i class="fas fa-map-marker-alt text-green-500 text-xl"></i> <!-- Changed icon color -->
             </div>
             <div>
               <h3 class="text-lg font-semibold text-gray-800">Our Location</h3>
               <p class="text-gray-600">BLk 4, Railway Compound, Dugbe<br>Ibadan, Nigeria</p>
             </div>
           </div>
-          
+
           <div class="flex items-start fade-in" data-aos="fade-up" data-aos-delay="150">
-            <div class="bg-red-100 p-3 rounded-full mr-4 animate-pulse">
-              <i class="fas fa-phone-alt text-red-500 text-xl"></i>
+            <div class="bg-green-100 p-3 rounded-full mr-4 animate-pulse"> <!-- Changed color -->
+              <i class="fas fa-phone-alt text-green-500 text-xl"></i> <!-- Changed icon color -->
             </div>
             <div>
               <h3 class="text-lg font-semibold text-gray-800">Phone Number</h3>
               <p class="text-gray-600">+234 (0) 806 612 7153<br>+234 (0) 915 225 9397</p>
             </div>
           </div>
-          
+
           <div class="flex items-start fade-in" data-aos="fade-up" data-aos-delay="200">
-            <div class="bg-red-100 p-3 rounded-full mr-4 animate-pulse">
-              <i class="fas fa-envelope text-red-500 text-xl"></i>
+            <div class="bg-green-100 p-3 rounded-full mr-4 animate-pulse"> <!-- Changed color -->
+              <i class="fas fa-envelope text-green-500 text-xl"></i> <!-- Changed icon color -->
             </div>
             <div>
               <h3 class="text-lg font-semibold text-gray-800">Email Address</h3>
               <p class="text-gray-600">muftaudeenyusufbabatunde@gmail.com<br>abdullahibabatunde644@gmail.com</p>
             </div>
           </div>
-          
+
           <div class="flex items-start fade-in" data-aos="fade-up" data-aos-delay="250">
-            <div class="bg-red-100 p-3 rounded-full mr-4 animate-pulse">
-              <i class="fas fa-clock text-red-500 text-xl"></i>
+            <div class="bg-green-100 p-3 rounded-full mr-4 animate-pulse"> <!-- Changed color -->
+              <i class="fas fa-clock text-green-500 text-xl"></i> <!-- Changed icon color -->
             </div>
             <div>
               <h3 class="text-lg font-semibold text-gray-800">Working Hours</h3>
@@ -151,7 +151,7 @@
             </div>
           </div>
         </div>
-        
+
         <!-- Map -->
         <div class="h-80 rounded-2xl overflow-hidden shadow-lg border border-gray-200 map-container scale-hover" data-aos="zoom-in" data-aos-delay="300">
           <iframe
@@ -170,28 +170,27 @@
     <div class="text-center mb-16" data-aos="fade-down">
       <h2 class="text-3xl md:text-4xl font-bold text-gray-800 mb-4">Frequently Asked Questions</h2>
       <p class="text-gray-600 max-w-2xl mx-auto fade-in">
-        Find answers to common questions about our heart disease prediction service
+        Find answers to common questions about our kidney disease risk prediction service
       </p>
-      <div class="w-24 h-1 bg-red-500 rounded-full mx-auto mt-4 scale-hover" data-aos="flip-up" data-aos-delay="200"></div>
+      <div class="w-24 h-1 bg-green-500 rounded-full mx-auto mt-4 scale-hover" data-aos="flip-up" data-aos-delay="200"></div> <!-- Changed color -->
     </div>
-    
+
     <div class="max-w-3xl mx-auto space-y-6">
       <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 faq-item" data-aos="fade-up" data-aos-delay="100">
-        <h3 class="text-xl font-semibold text-gray-800 mb-2">How accurate is your prediction model?</h3>
-        <p class="text-gray-600">Our model has an accuracy rate of 95% based on clinical validation studies using data from over 10,000 patients.</p>
+        <h3 class="text-xl font-semibold text-gray-800 mb-2">How accurate is your kidney disease risk prediction model?</h3>
+        <p class="text-gray-600">Our model's accuracy is based on clinical validation studies using data from NHANES 2021-2023, focusing on established risk factors and biomarkers.</p>
       </div>
-      
+
       <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 faq-item" data-aos="fade-up" data-aos-delay="150">
-       ?"
         <h3 class="text-xl font-semibold text-gray-800 mb-2">Is my health data secure?</h3>
-        <p class="text-gray-600">Yes, we use bank-level encryption and comply with HIPAA regulations to ensure your data is always protected and private.</p>
+        <p class="text-gray-600">Yes, we use industry-standard encryption and follow strict privacy protocols to ensure your health data is protected and confidential.</p>
       </div>
-      
+
       <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 faq-item" data-aos="fade-up" data-aos-delay="200">
         <h3 class="text-xl font-semibold text-gray-800 mb-2">Do I need a prescription to use this service?</h3>
-        <p class="text-gray-600">No, our service is available directly to consumers. However, we recommend sharing results with your healthcare provider.</p>
+        <p class="text-gray-600">No, our service is available directly to users. However, we strongly recommend discussing results with your healthcare provider.</p>
       </div>
-      
+
       <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 faq-item" data-aos="fade-up" data-aos-delay="250">
         <h3 class="text-xl font-semibold text-gray-800 mb-2">How long does it take to get results?</h3>
         <p class="text-gray-600">Results are generated instantly after you submit your health information. The entire process takes less than 5 minutes.</p>
